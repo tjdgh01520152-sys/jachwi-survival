@@ -25,6 +25,15 @@ export interface PricedCandidate extends KakaoPlace {
   priceLabel: string; // 예: "예상 7,000원대" (프랜차이즈 seed 매칭은 recommend.ts에서 처리)
   tags: string[];
   distanceMeters: number;
+  // 안암/안암역 데모용으로 사용자가 직접 조사해 제공한 참고 데이터가 있을 때만 채워진다
+  // (lib/curatedAnam.ts). "rating"은 생존 적합도 점수 산출에만 쓰이고, UI에는 절대
+  // 카카오 평점이나 별점처럼 노출하지 않는다.
+  curated?: {
+    rating: number; // 0~5
+    type: "single" | "share" | "both";
+    representativePrice: number; // 1인당 계산에 쓰는 대표가
+    shareTotalPrice?: number; // "share"/"both"일 때 전체 가격 대표값
+  };
 }
 
 export interface CookingItem {

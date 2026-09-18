@@ -35,13 +35,19 @@ export function computeSurvivalScore(params: {
   placeName: string;
   source: SurvivalScoreSource;
   isCurated: boolean; // 프랜차이즈 seed 매칭 여부
+  // 안암/안암역 데모용으로 사용자가 직접 조사해 제공한 참고 평점(0~5)이 있을 때만 넘어온다
+  // (lib/curatedAnam.ts). 있으면 해시 기반 시드 대신 이 값을 0~100으로 환산해 기준 점수로 쓴다.
+  // 이 경우에도 UI 노출 문구/정책은 동일하게 "생존 적합도 N점"이며 별점처럼 보여주지 않는다.
+  curatedRating?: number;
 }): SurvivalScoreResult {
-  const { categoryName, placeName, source, isCurated } = params;
+  const { categoryName, placeName, source, isCurated, curatedRating } = params;
   const text = `${categoryName} ${placeName}`;
   const labels: string[] = [];
   let score: number;
 
-  if (source === "cooking") {
+  if (curatedRating !== undefined) {
+    score = Math.round(curatedRating * 20);
+  } else if (source === "cooking") {
     score = pickInRange(`cook:${placeName}`, 85, 95);
     labels.push("직접 요리");
   } else if (source === "convenience") {

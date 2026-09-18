@@ -185,12 +185,63 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
     const matches = findFranchiseMenus(r.place_name);
 
     if (matches.length === 0) {
+      const curated = r.curated;
       const nonFranchiseScore = computeSurvivalScore({
         categoryName: r.category_name,
         placeName: r.place_name,
         source: "eatout",
         isCurated: false,
+        curatedRating: curated?.rating,
       });
+
+      // 안암/안암역 큐레이션 데이터가 있으면 그 type이 단품/나눠먹기 여부를 전적으로 결정한다
+      // (아래 일반 findShareDishRule 추정은 적용하지 않는다 — 사용자가 이미 직접 분류해준 값이라
+      // 예를 들어 삼겹살집이어도 curated.type이 "single"이면 나눠먹기 후보를 만들지 않는다).
+      if (curated) {
+        if (curated.type === "single" || curated.type === "both") {
+          eatout.push({
+            id: r.id,
+            basePlaceId: r.id,
+            source: "eatout",
+            mealMode: "single",
+            menuName: guessMenuName(r),
+            placeName: r.place_name,
+            category: shortCategory(r.category_name),
+            tags: r.tags,
+            price: curated.representativePrice,
+            distanceMeters: r.distanceMeters,
+            placeUrl: r.place_url,
+            repeatQuota: 1,
+            isCurated: false,
+            survivalScore: nonFranchiseScore.score,
+            survivalStaticLabels: nonFranchiseScore.labels,
+          });
+        }
+        if (curated.type === "share" || curated.type === "both") {
+          const totalPrice = curated.shareTotalPrice ?? curated.representativePrice * 2;
+          eatout.push({
+            id: `${r.id}::share`,
+            basePlaceId: r.id,
+            source: "eatout",
+            mealMode: "share",
+            menuName: `${guessMenuName(r)} (나눠먹기)`,
+            placeName: r.place_name,
+            category: shortCategory(r.category_name),
+            tags: r.tags,
+            price: curated.representativePrice,
+            totalPrice,
+            servings: 2,
+            distanceMeters: r.distanceMeters,
+            placeUrl: r.place_url,
+            repeatQuota: 1,
+            isCurated: false,
+            survivalScore: nonFranchiseScore.score,
+            survivalStaticLabels: nonFranchiseScore.labels,
+          });
+        }
+        continue;
+      }
+
       eatout.push({
         id: r.id,
         basePlaceId: r.id,
@@ -247,6 +298,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
         placeName: r.place_name,
         source: "eatout",
         isCurated: true,
+        curatedRating: r.curated?.rating,
       });
 
       if (menu.mealMode === "share") {

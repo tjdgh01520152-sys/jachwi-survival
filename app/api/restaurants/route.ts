@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { geocodeLocation, searchByCategory, KakaoApiError } from "@/lib/kakao";
 import { estimatePrice, convenienceEstimate, toPriceLabel } from "@/lib/pricing";
 import { FALLBACK_CENTER, FALLBACK_RESTAURANTS, FALLBACK_CONVENIENCE } from "@/lib/fallbackData";
+import { CURATED_ANAM_RESTAURANTS, isCuratedAnamLocation } from "@/lib/curatedAnam";
 import { KakaoPlace, PricedCandidate } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -32,11 +33,15 @@ export async function GET(req: NextRequest) {
   const radius = Number.isFinite(radiusParam) && radiusParam > 0 ? radiusParam : 1200;
 
   const hasKey = !!process.env.KAKAO_REST_API_KEY;
+  // "안암"/"안암역" 입력에는 실시간 FD6 검색 대신, 카페/술집류를 직접 걸러내고 실제 평점·가격대를
+  // 조사해서 만든 큐레이션 식당 데이터를 쓴다(lib/curatedAnam.ts). 다른 지역은 기존과 동일하게
+  // Kakao Local API 실시간 조회를 그대로 사용한다.
+  const useCurated = isCuratedAnamLocation(location);
 
   if (!hasKey) {
     return NextResponse.json({
       center: FALLBACK_CENTER,
-      restaurants: FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
+      restaurants: useCurated ? CURATED_ANAM_RESTAURANTS : FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
       convenience: FALLBACK_CONVENIENCE.map((p) => toPriced(p, "convenience")),
       isFallback: true,
       fallbackReason:
@@ -49,7 +54,7 @@ export async function GET(req: NextRequest) {
     if (!center) {
       return NextResponse.json({
         center: FALLBACK_CENTER,
-        restaurants: FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
+        restaurants: useCurated ? CURATED_ANAM_RESTAURANTS : FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
         convenience: FALLBACK_CONVENIENCE.map((p) => toPriced(p, "convenience")),
         isFallback: true,
         fallbackReason: `"${location}" 위치를 찾지 못해 안암역 기준 예시 데이터를 보여드리고 있어요.`,
@@ -57,13 +62,13 @@ export async function GET(req: NextRequest) {
     }
 
     const [restaurants, convenience] = await Promise.all([
-      searchByCategory("FD6", center.x, center.y, radius),
+      useCurated ? Promise.resolve(null) : searchByCategory("FD6", center.x, center.y, radius),
       searchByCategory("CS2", center.x, center.y, radius),
     ]);
 
     return NextResponse.json({
       center,
-      restaurants: restaurants.map((p) => toPriced(p, "eatout")),
+      restaurants: useCurated ? CURATED_ANAM_RESTAURANTS : restaurants!.map((p) => toPriced(p, "eatout")),
       convenience: convenience.map((p) => toPriced(p, "convenience")),
       isFallback: false,
     });
@@ -75,7 +80,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       center: FALLBACK_CENTER,
-      restaurants: FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
+      restaurants: useCurated ? CURATED_ANAM_RESTAURANTS : FALLBACK_RESTAURANTS.map((p) => toPriced(p, "eatout")),
       convenience: FALLBACK_CONVENIENCE.map((p) => toPriced(p, "convenience")),
       isFallback: true,
       fallbackReason: `${message} 대신 예시 데이터를 보여드리고 있어요.`,
