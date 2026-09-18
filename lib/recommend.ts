@@ -32,6 +32,8 @@ interface UnifiedCandidate {
   fullness?: number; // 1~10, 프랜차이즈 seed에 있으면 든든함 점수에 사용
   hasSetSibling?: boolean; // single일 때, 같은 브랜드에 세트가 따로 있는지 (이유 문구용)
   franchiseBrand?: string; // isCurated일 때 브랜드명 ("추가하면 좋은 사이드" 조회용)
+  totalCost?: number; // cooking 전용: 추가 장보기 총액
+  mealsCovered?: number; // cooking 전용: 이 장보기로 해결되는 끼니 수
   distanceMeters: number | null;
   placeUrl: string | null;
   repeatQuota: number; // 페널티 없이 반복 가능한 횟수
@@ -201,6 +203,8 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
     category: c.category,
     tags: c.tags,
     price: c.pricePerMeal,
+    totalCost: c.totalCost,
+    mealsCovered: c.meals,
     distanceMeters: null,
     placeUrl: null,
     repeatQuota: c.repeatable,
@@ -577,7 +581,8 @@ function buildReason(
   location: string
 ): string {
   if (c.source === "cooking") {
-    return `직접 만들면 한 끼 ${c.price.toLocaleString("ko-KR")}원대로 해결돼요. 여러 끼니를 한 번에 절약할 수 있어요.`;
+    const mealsCovered = c.mealsCovered ?? 1;
+    return `한 번 만들어두면 ${mealsCovered}끼까지 나눠 먹을 수 있어요.`;
   }
 
   const distText =
@@ -669,12 +674,14 @@ function computeDiversityMetrics(meals: MealPlanItem[]): DiversityMetrics {
   for (let i = 1; i < meals.length; i++) {
     const prev = meals[i - 1];
     const curr = meals[i];
+    // 요리끼리 연속되는 건 의도된 동작이라 다양성 점수에서 감점하지 않는다.
+    const bothCooking = curr.source === "cooking" && prev.source === "cooking";
 
-    if (curr.menuName === prev.menuName) consecutiveMenuCount++;
-    if (curr.placeId !== null && curr.placeId === prev.placeId) consecutivePlaceCount++;
-    if (curr.franchiseBrand && curr.franchiseBrand === prev.franchiseBrand) consecutiveBrandCount++;
+    if (!bothCooking && curr.menuName === prev.menuName) consecutiveMenuCount++;
+    if (!bothCooking && curr.placeId !== null && curr.placeId === prev.placeId) consecutivePlaceCount++;
+    if (!bothCooking && curr.franchiseBrand && curr.franchiseBrand === prev.franchiseBrand) consecutiveBrandCount++;
 
-    if (curr.category === prev.category) {
+    if (!bothCooking && curr.category === prev.category) {
       categoryStreak += 1;
       if (categoryStreak >= 3) categoryStreakViolations++;
     } else {
@@ -733,16 +740,20 @@ function findDiversityReplacement(
 
   const isSameAsCurrent = (c: UnifiedCandidate) =>
     c.basePlaceId === curr.placeId && c.menuName === curr.menuName;
+  // 요리끼리는 연속 배치를 허용하므로, 후보와 이웃이 둘 다 요리면 아래 제약들을 적용하지 않는다.
   const violatesPrev = (c: UnifiedCandidate) =>
-    c.menuName === prev.menuName ||
-    c.basePlaceId === prev.placeId ||
-    (!!c.franchiseBrand && c.franchiseBrand === prev.franchiseBrand);
+    !(c.source === "cooking" && prev.source === "cooking") &&
+    (c.menuName === prev.menuName ||
+      c.basePlaceId === prev.placeId ||
+      (!!c.franchiseBrand && c.franchiseBrand === prev.franchiseBrand));
   const violatesNext = (c: UnifiedCandidate) =>
     !!next &&
+    !(c.source === "cooking" && next.source === "cooking") &&
     (c.menuName === next.menuName ||
       c.basePlaceId === next.placeId ||
       (!!c.franchiseBrand && c.franchiseBrand === next.franchiseBrand));
-  const violatesCategoryStreak = (c: UnifiedCandidate) => c.category === prev.category;
+  const violatesCategoryStreak = (c: UnifiedCandidate) =>
+    !(c.source === "cooking" && prev.source === "cooking") && c.category === prev.category;
 
   const base = unifiedPool.filter((c) => {
     if (excludedIds.has(c.basePlaceId)) return false;
@@ -816,11 +827,15 @@ function enforceMealDiversity(
     const curr = result[i];
     const next = i + 1 < result.length ? result[i + 1] : null;
 
-    const sameMenu = curr.menuName === prev.menuName;
-    const samePlace = curr.placeId !== null && curr.placeId === prev.placeId;
-    const sameBrand = !!curr.franchiseBrand && curr.franchiseBrand === prev.franchiseBrand;
+    // 직접요리끼리는 연속 배치를 허용한다 (카레→카레→편의점→카레 같은 패턴이 자연스러움).
+    // 반복 총량은 scoreCandidate의 repeatQuota 페널티가 따로 관리하므로 여기서는 막지 않는다.
+    const bothCooking = curr.source === "cooking" && prev.source === "cooking";
+
+    const sameMenu = !bothCooking && curr.menuName === prev.menuName;
+    const samePlace = !bothCooking && curr.placeId !== null && curr.placeId === prev.placeId;
+    const sameBrand = !bothCooking && !!curr.franchiseBrand && curr.franchiseBrand === prev.franchiseBrand;
     const prospectiveStreak = curr.category === prev.category ? categoryStreak + 1 : 1;
-    const categoryViolation = prospectiveStreak >= 3;
+    const categoryViolation = !bothCooking && prospectiveStreak >= 3;
 
     if (i !== protectedIndex && (sameMenu || samePlace || sameBrand || categoryViolation)) {
       const replacement = findDiversityReplacement(
@@ -877,6 +892,7 @@ function neighborsOf(meals: MealPlanItem[], index: number): [MealPlanItem | null
 
 function violatesNeighbor(c: UnifiedCandidate, m: MealPlanItem | null): boolean {
   if (!m) return false;
+  if (c.source === "cooking" && m.source === "cooking") return false; // 요리끼리는 연속 반복 허용
   return (
     c.menuName === m.menuName ||
     c.basePlaceId === m.placeId ||
@@ -1168,6 +1184,10 @@ function toMealPlanItem(
   let priceLabel: string;
   if (c.mealMode === "share" && c.totalPrice !== undefined && c.servings !== undefined) {
     priceLabel = `총 ${c.totalPrice.toLocaleString("ko-KR")}원 · ${c.servings}명 기준 내 부담 ${c.price.toLocaleString(
+      "ko-KR"
+    )}원`;
+  } else if (c.mealMode === "cooking" && c.totalCost !== undefined && c.mealsCovered !== undefined) {
+    priceLabel = `장보기 예상 ${c.totalCost.toLocaleString("ko-KR")}원 · ${c.mealsCovered}끼 해결 · 한 끼 ${c.price.toLocaleString(
       "ko-KR"
     )}원`;
   } else if (c.isCurated) {
