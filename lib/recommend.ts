@@ -531,16 +531,16 @@ const BUDGET_TIERS: BudgetTier[] = [
   {
     grade: "생계형 편의점 계급",
     message: "편의점과 저가 메뉴를 잘 섞으면 버틸 수 있어요.",
-    subtitles: ["삼김 라면 연합군", "마감 세일 사냥꾼", "학식 프로 참석러"],
+    subtitles: ["삼김 라면 무한 반복", "마감 세일 사냥꾼", "학식 프로 참석러"],
     cookingBoostDelta: 1.5,
     convenienceBoostDelta: 3,
     eatoutBoostDelta: -1,
     setPenaltyDelta: 2.5,
   },
   {
-    grade: "동네 맛집 탐험 계급",
+    grade: "국밥마스터 계급",
     message: "이제 한 끼다운 선택지가 보이기 시작해요.",
-    subtitles: ["배달 쪼개기 장인", "동네 맛집 탐험가", "밀키트 대가"],
+    subtitles: ["동네 맛집 탐험가", "밀키트 대가", "백반 루트 개척자"],
     cookingBoostDelta: 0,
     convenienceBoostDelta: 0,
     eatoutBoostDelta: 0.5,
@@ -852,7 +852,7 @@ export function computeSurvivalGrade(
     return {
       grade: "텅장 경보",
       subtitle: "",
-      message: "이 플랜은 지갑이 먼저 쓰러져요. 몇 끼는 요리나 편의점으로 돌려야 합니다.",
+      message: "인간은 음식 없이 3주 생존 가능합니다. 그래도 이 플랜은 위험해요. 몇 끼는 요리나 편의점으로 돌려야 합니다.",
       avgPerMeal,
     };
   }

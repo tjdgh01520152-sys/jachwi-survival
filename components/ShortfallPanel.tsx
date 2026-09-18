@@ -34,7 +34,8 @@ export default function ShortfallPanel({
             텅장 경보
           </span>
           <span className="text-[13px] font-extrabold text-[#3C4633]">
-            이 플랜은 지갑이 먼저 쓰러져요. 몇 끼는 요리나 편의점으로 돌려야 합니다.
+            인간은 음식 없이 3주 생존 가능합니다. 그래도 이 플랜은 위험해요. 몇 끼는 요리나 편의점으로
+            돌려야 합니다.
           </span>
         </div>
 

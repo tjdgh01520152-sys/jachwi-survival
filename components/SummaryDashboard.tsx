@@ -7,7 +7,7 @@ const GRADE_BADGE: Record<string, string> = {
   "텅장 경보": "bg-ramen text-[#FFF8EC]",
   "냉장고 파먹기 계급": "bg-coin text-ink",
   "생계형 편의점 계급": "bg-coin text-ink",
-  "동네 맛집 탐험 계급": "bg-moss text-ink",
+  "국밥마스터 계급": "bg-moss text-ink",
   "귀족 자취생 계급": "bg-cool text-ink",
 };
 
