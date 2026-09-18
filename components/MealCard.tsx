@@ -73,18 +73,6 @@ export default function MealCard({
         {meal.distanceMeters !== null && <span>· {Math.round(meal.distanceMeters)}m</span>}
       </div>
 
-      {/* 데모용 내부 점수. 카카오 평점이나 별점이 아니라 서비스 자체 지표라는 걸 문구로 명시한다. */}
-      {typeof meal.survivalScore === "number" && (
-        <div className="flex flex-col gap-0.5">
-          <p className="text-xs font-semibold text-brand-600">
-            생존 적합도 {meal.survivalScore}점
-          </p>
-          {meal.survivalLabels && meal.survivalLabels.length > 0 && (
-            <p className="text-xs text-neutral-400">{meal.survivalLabels.join(" · ")}</p>
-          )}
-        </div>
-      )}
-
       <p className="text-sm text-neutral-500">{meal.reason}</p>
 
       {meal.sideSuggestion && (
