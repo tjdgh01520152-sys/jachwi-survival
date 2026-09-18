@@ -23,7 +23,7 @@ export default function OptionChips({ selected, onToggle }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       {groups.map((group) => {
         const items = OPTION_META.filter((o) => o.group === group);
         const hasProgressive = items.some((o) => o.core);
@@ -32,12 +32,12 @@ export default function OptionChips({ selected, onToggle }: Props) {
         const hiddenCount = items.length - visibleItems.length;
 
         return (
-          <div key={group}>
-            <p className="mb-1.5 text-xs font-medium text-neutral-400">
+          <div key={group} className="flex flex-col gap-[7px]">
+            <p className="text-xs font-extrabold text-[#6B7360]">
               {group}
-              {isSingleSelectGroup(group) && <span className="ml-1 text-neutral-300">(하나만 선택)</span>}
+              {isSingleSelectGroup(group) && <span className="ml-1">(하나만 선택)</span>}
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-[7px]">
               {visibleItems.map((opt) => {
                 const on = selected.has(opt.key);
                 return (
@@ -45,8 +45,12 @@ export default function OptionChips({ selected, onToggle }: Props) {
                     key={opt.key}
                     type="button"
                     onClick={() => onToggle(opt.key)}
-                    className={`chip ${on ? "chip-on" : "chip-off"}`}
                     aria-pressed={on}
+                    className={`press rounded-full border-[3px] px-3.5 py-2 text-[13px] font-extrabold transition-colors ${
+                      on
+                        ? "border-ink bg-ramen text-[#FFF8EC]"
+                        : "border-[#C9CDBD] bg-white text-ink"
+                    }`}
                   >
                     {opt.label}
                   </button>
@@ -56,7 +60,7 @@ export default function OptionChips({ selected, onToggle }: Props) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group)}
-                  className="chip chip-off border-dashed text-neutral-400"
+                  className="press rounded-full border-[3px] border-dashed border-[#B4B9A8] bg-transparent px-3.5 py-2 text-[13px] font-extrabold text-[#6B7360]"
                 >
                   {isExpanded ? "접기" : `더 보기 +${hiddenCount}`}
                 </button>
@@ -65,7 +69,7 @@ export default function OptionChips({ selected, onToggle }: Props) {
           </div>
         );
       })}
-      <p className="text-xs text-neutral-400">
+      <p className="text-xs font-bold text-[#6B7360]">
         선택하지 않아도 기본값으로 추천이 돌아가요.
       </p>
     </div>

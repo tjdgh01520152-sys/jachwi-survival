@@ -7,22 +7,32 @@ html {
 }
 
 body {
-  background: #faf7f2;
-  color: #23201b;
+  background: #b7d48f;
+  color: #12140f;
 }
 
-.chip {
-  @apply inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer select-none;
+a {
+  color: #1b7f3b;
+}
+a:hover {
+  color: #12140f;
 }
 
-.chip-off {
-  @apply border-neutral-300 bg-white text-neutral-600 hover:border-brand-400 hover:text-brand-600;
+input {
+  font-family: inherit;
 }
 
-.chip-on {
-  @apply border-brand-500 bg-brand-500 text-white shadow-sm;
+/* 카드 (일반) — paper 배경 + ink 두꺼운 보더 + 하드 섀도 */
+.panel {
+  @apply rounded-[20px] border-4 border-ink bg-paper shadow-hard;
 }
 
-.card {
-  @apply rounded-2xl border border-neutral-200 bg-white shadow-card;
+/* 카드 (작은 것: 끼니 카드/숨긴 식당 패널) */
+.panel-sm {
+  @apply rounded-[18px] border-4 border-ink bg-paper shadow-hardSm;
+}
+
+/* 버튼/칩 눌림 효과 */
+.press {
+  @apply active:translate-x-1 active:translate-y-1 active:shadow-hardPress;
 }

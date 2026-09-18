@@ -89,26 +89,26 @@ export default function SurvivalMap({ center, meals }: Props) {
   }, [state, center?.lat, center?.lng, JSON.stringify(pins.map((p) => [p.mealIndex, p.lat, p.lng, p.source]))]);
 
   return (
-    <div className="card p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-bold text-neutral-800">안암 생존 지도</p>
-        <div className="flex items-center gap-3 text-xs text-neutral-500">
-          <Legend color="bg-neutral-800" label="내 위치" />
-          <Legend color="bg-brand-600" label="식당" />
-          <Legend color="bg-emerald-600" label="편의점" />
+    <div className="panel flex flex-col gap-2.5 p-[15px]">
+      <div className="flex flex-wrap items-center justify-between gap-1.5">
+        <p className="text-[15px] font-black text-ink">안암 생존 지도</p>
+        <div className="flex items-center gap-2.5 text-[11px] font-extrabold text-ink">
+          <Legend color="bg-ink" label="내 위치" />
+          <Legend color="bg-ramen" label="식당" />
+          <Legend color="bg-[#1B7F3B]" label="편의점" />
         </div>
       </div>
 
-      <div className="mt-3 overflow-hidden rounded-xl border border-neutral-100">
+      <div className="relative h-[190px] overflow-hidden rounded-[14px] border-[3px] border-ink">
         {state === "ready" || state === "loading" ? (
-          <div ref={containerRef} className="h-64 w-full bg-neutral-50 sm:h-80" />
+          <div ref={containerRef} className="h-full w-full bg-[#DDE7CB]" />
         ) : (
           <PlaceholderMap center={center} pins={pins} />
         )}
       </div>
 
       {center && pins.length === 0 && (
-        <p className="mt-2 text-xs text-neutral-400">
+        <p className="text-xs font-bold text-[#6B7360]">
           이번 플랜은 집밥 위주라 지도에는 내 위치만 표시돼요.
         </p>
       )}
@@ -119,7 +119,7 @@ export default function SurvivalMap({ center, meals }: Props) {
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={`h-2.5 w-2.5 rounded-full ${color}`} />
+      <span className={`h-[9px] w-[9px] rounded-full ${color}`} />
       {label}
     </span>
   );
@@ -135,39 +135,39 @@ function PlaceholderMap({
 }) {
   if (!center) {
     return (
-      <div className="flex h-64 items-center justify-center p-6 text-center text-sm text-neutral-400 sm:h-80">
+      <div className="flex h-full items-center justify-center bg-[repeating-linear-gradient(135deg,#DDE7CB_0_10px,#D2DFBC_10px_20px)] p-6 text-center text-sm font-bold text-[#5A6350]">
         위치 정보를 불러오지 못했어요.
       </div>
     );
   }
 
   return (
-    <div className="flex h-64 flex-col gap-2 overflow-y-auto bg-neutral-50 p-4 sm:h-80">
-      <div className="flex items-center gap-2 rounded-lg bg-neutral-800 px-3 py-2 text-sm font-semibold text-white">
+    <div className="flex h-full flex-col gap-2 overflow-y-auto bg-[repeating-linear-gradient(135deg,#DDE7CB_0_10px,#D2DFBC_10px_20px)] p-3">
+      <div className="flex items-center gap-2 self-start rounded-full border-[3px] border-ink bg-ink px-2.5 py-1 text-xs font-black text-[#FFF8EC]">
         <span>내 위치</span>
       </div>
-      {pins.length === 0 ? null : (
-        pins.map((m) => (
-          <div
-            key={`${m.mealIndex}-${m.placeId}`}
-            className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm shadow-sm"
-          >
-            <span
-              className={`inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold text-white ${
-                m.source === "convenience" ? "bg-emerald-600" : "bg-brand-600"
-              }`}
+      {pins.length === 0
+        ? null
+        : pins.map((m) => (
+            <div
+              key={`${m.mealIndex}-${m.placeId}`}
+              className="flex items-center gap-2 rounded-full border-[3px] border-ink bg-white px-2.5 py-1 text-xs"
             >
-              {m.mealIndex}
-            </span>
-            <span className="font-medium text-neutral-700">{m.placeName}</span>
-            {m.distanceMeters !== null && (
-              <span className="ml-auto shrink-0 text-xs text-neutral-400">
-                {Math.round(m.distanceMeters)}m
+              <span
+                className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full text-[11px] font-black text-[#FFF8EC] ${
+                  m.source === "convenience" ? "bg-[#1B7F3B]" : "bg-ramen"
+                }`}
+              >
+                {m.mealIndex}
               </span>
-            )}
-          </div>
-        ))
-      )}
+              <span className="font-extrabold text-ink">{m.placeName}</span>
+              {m.distanceMeters !== null && (
+                <span className="ml-auto shrink-0 font-bold text-[#6B7360]">
+                  {Math.round(m.distanceMeters)}m
+                </span>
+              )}
+            </div>
+          ))}
     </div>
   );
 }
@@ -186,14 +186,13 @@ function makePinOverlay(
   el.style.justifyContent = "center";
   el.style.borderRadius = "9999px";
   el.style.fontSize = "12px";
-  el.style.fontWeight = "700";
-  el.style.color = "#fff";
+  el.style.fontWeight = "900";
+  el.style.color = "#FFF8EC";
   el.style.whiteSpace = "nowrap";
-  el.style.padding = style === "center" ? "4px 10px" : "4px 8px";
-  el.style.boxShadow = "0 2px 6px rgba(0,0,0,0.25)";
-  el.style.border = "2px solid white";
+  el.style.padding = "5px 10px";
+  el.style.border = "3px solid #12140F";
   el.style.background =
-    style === "center" ? "#1f2937" : style === "convenience" ? "#059669" : "#f06100";
+    style === "center" ? "#12140F" : style === "convenience" ? "#1B7F3B" : "#E5533D";
   el.textContent = label;
   if (title) el.title = title;
 

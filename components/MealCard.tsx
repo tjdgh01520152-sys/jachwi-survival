@@ -31,52 +31,60 @@ export default function MealCard({
 }: Props) {
   if (meal.isEmpty) {
     return (
-      <div className="card flex flex-col gap-2 border-dashed border-neutral-300 bg-neutral-50 p-4">
-        <p className="text-xs font-semibold text-neutral-400">{meal.mealIndex}번째 끼니</p>
-        <p className="text-base font-bold text-neutral-500">비어 있는 끼니</p>
-        <p className="text-sm font-medium text-neutral-400">예산 부족으로 추천 불가</p>
-        <p className="text-sm text-neutral-400">{meal.reason}</p>
+      <div className="flex flex-col gap-2 rounded-[18px] border-4 border-dashed border-ink/30 bg-[#EDEAD8] p-[14px]">
+        <p className="text-xs font-extrabold text-[#6B7360]">{meal.mealIndex}번째 끼니</p>
+        <p className="font-heading text-lg text-ink/60">비어 있는 끼니</p>
+        <p className="text-sm font-bold text-[#6B7360]">예산 부족으로 추천 불가</p>
+        <p className="text-sm font-medium text-[#6B7360]">{meal.reason}</p>
       </div>
     );
   }
 
   return (
-    <div className="card flex flex-col gap-3 p-4">
+    <div className="panel-sm flex flex-col gap-[9px] p-[14px]">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-xs font-semibold text-brand-600">
-            {meal.mealIndex}번째 끼니 · {SOURCE_LABEL[meal.source]}
-          </p>
-          <p className="mt-1 text-base font-bold text-neutral-800">{meal.menuName}</p>
-          <p className="text-sm text-neutral-500">{meal.placeName}</p>
-        </div>
-        <span className="shrink-0 rounded-full bg-neutral-100 px-2.5 py-1 text-xs text-neutral-500">
+        <span className="text-[13px] font-black text-ramen">
+          {meal.mealIndex}번째 끼니 · {SOURCE_LABEL[meal.source]}
+        </span>
+        <span className="shrink-0 rounded-full border-2 border-ink bg-[#EDEAD8] px-[9px] py-[3px] text-[11px] font-extrabold text-ink">
           {meal.category}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-neutral-700">
-        <span>{meal.priceLabel}</span>
+      <p className="font-heading leading-[1.2] text-ink" style={{ fontSize: "22px" }}>
+        {meal.menuName}
+      </p>
+      <p className="text-[13px] font-bold text-[#4A5140]">{meal.placeName}</p>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-black text-ink">{meal.priceLabel}</span>
         {meal.isCurated && (
           <span
-            className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700"
+            className="rounded-full border-2 border-ink bg-[#CDEBC8] px-[9px] py-[3px] text-[11px] font-extrabold text-ink"
             title="매장/배달/프로모션에 따라 실제 가격은 달라질 수 있어요."
           >
             프랜차이즈 기준가
           </span>
         )}
         {meal.mealMode === "share" && (
-          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-semibold text-sky-700">
+          <span className="rounded-full border-2 border-ink bg-[#D3E7F8] px-[9px] py-[3px] text-[11px] font-extrabold text-ink">
             나눠먹기 · 같이 먹을 사람 필요
           </span>
         )}
-        {meal.distanceMeters !== null && <span>· {Math.round(meal.distanceMeters)}m</span>}
+        {!meal.isCurated && meal.mealMode !== "share" && (
+          <span className="rounded-full border-2 border-ink bg-[#CDEBC8] px-[9px] py-[3px] text-[11px] font-extrabold text-ink">
+            {SOURCE_LABEL[meal.source]}
+          </span>
+        )}
+        {meal.distanceMeters !== null && (
+          <span className="text-[13px] font-bold text-[#4A5140]">· {Math.round(meal.distanceMeters)}m</span>
+        )}
       </div>
 
-      <p className="text-sm text-neutral-500">{meal.reason}</p>
+      <p className="text-[13px] font-medium leading-[1.55] text-[#3C4633]">{meal.reason}</p>
 
       {meal.sideSuggestion && (
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs font-bold text-[#6B7360]">
           추가 사이드 후보: {meal.sideSuggestion.menuName}{" "}
           {meal.sideSuggestion.price.toLocaleString("ko-KR")}원
         </p>
@@ -87,19 +95,19 @@ export default function MealCard({
           href={meal.placeUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-brand-600 underline underline-offset-2 hover:text-brand-700"
+          className="text-[13px] font-black text-[#1B7F3B] underline underline-offset-2"
         >
           카카오맵에서 보기
         </a>
       )}
 
       {isExcluded && (
-        <p className="text-xs font-medium text-red-500">
-          숨긴 곳이었지만 대안이 없어 다시 표시됐어요.
-        </p>
+        <p className="text-xs font-bold text-ramen">숨긴 곳이었지만 대안이 없어 다시 표시됐어요.</p>
       )}
 
-      <div className="mt-1 flex flex-wrap gap-1.5 border-t border-neutral-100 pt-3">
+      <div className="h-0.5 bg-[#DDD9C6]" />
+
+      <div className="flex flex-wrap gap-[7px]">
         <ActionButton onClick={onReroll} disabled={busy} label="이것만 바꾸기" />
         {meal.source !== "cooking" && (
           <>
@@ -132,10 +140,8 @@ function ActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        tone === "danger"
-          ? "border-red-200 text-red-500 hover:bg-red-50"
-          : "border-neutral-200 text-neutral-600 hover:border-brand-400 hover:text-brand-600"
+      className={`press rounded-full border-2 bg-white px-[11px] py-[6px] text-xs font-extrabold disabled:cursor-not-allowed disabled:opacity-50 ${
+        tone === "danger" ? "border-ramen text-ramen" : "border-ink text-ink"
       }`}
     >
       {label}

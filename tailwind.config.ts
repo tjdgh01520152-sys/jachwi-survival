@@ -8,6 +8,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // 리디자인 팔레트 (design_handoff_jachwi_survival)
+        ink: "#12140F",
+        paper: "#FAF6E8",
+        moss: "#B7D48F",
+        mossdot: "#9BBE72",
+        coin: "#F5D547",
+        ramen: "#E5533D",
+        cool: "#7FB8E8",
+        // 구형 팔레트. 새 화면은 위 토큰만 쓰지만, 아직 참조하는 곳이 남아 있을 수 있어 유지.
         brand: {
           50: "#fff8f0",
           100: "#ffefdb",
@@ -21,8 +30,31 @@ const config: Config = {
           900: "#7e320c",
         },
       },
+      fontFamily: {
+        heading: ["var(--font-black-han-sans)", "sans-serif"],
+        body: ["var(--font-gothic-a1)", "sans-serif"],
+      },
       boxShadow: {
         card: "0 2px 10px rgba(0,0,0,0.06)",
+        hardLg: "8px 8px 0 #12140F",
+        hard: "6px 6px 0 #12140F",
+        hardSm: "5px 5px 0 #12140F",
+        hardBtn: "7px 7px 0 #12140F",
+        hardPress: "3px 3px 0 #12140F",
+      },
+      keyframes: {
+        bob: {
+          "0%, 100%": { transform: "translateY(0) rotate(-1deg)" },
+          "50%": { transform: "translateY(-7px) rotate(1deg)" },
+        },
+        blink: {
+          "0%, 92%, 100%": { opacity: "1" },
+          "95%": { opacity: "0.15" },
+        },
+      },
+      animation: {
+        bob: "bob 3.4s ease-in-out infinite",
+        blink: "blink 5s infinite",
       },
     },
   },

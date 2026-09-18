@@ -7,36 +7,30 @@ interface Props {
   onLocationChange: (v: string) => void;
   onBudgetChange: (v: string) => void;
   onMealsChange: (v: string) => void;
-  onSubmit: () => void;
-  loading: boolean;
 }
 
-function InlineInput({
+function MissionInput({
   value,
   onChange,
   placeholder,
   width,
-  suffix,
   inputMode,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder: string;
   width: string;
-  suffix: string;
   inputMode?: "numeric" | "text";
 }) {
   return (
-    <span className="inline-flex items-baseline gap-1">
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        inputMode={inputMode}
-        className={`${width} border-b-2 border-brand-400 bg-transparent px-1 py-0.5 text-center font-bold text-brand-700 outline-none focus:border-brand-600`}
-      />
-      <span className="text-neutral-500">{suffix}</span>
-    </span>
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      inputMode={inputMode}
+      className={`${width} border-0 border-b-[3px] border-ink bg-coin px-1.5 py-0.5 text-center font-black text-ink outline-none placeholder:text-ink/40`}
+      style={{ fontSize: "19px" }}
+    />
   );
 }
 
@@ -47,54 +41,52 @@ export default function SentenceForm({
   onLocationChange,
   onBudgetChange,
   onMealsChange,
-  onSubmit,
-  loading,
 }: Props) {
   const budgetDisplay = budget ? Number(budget).toLocaleString("ko-KR") : "";
+  const budgetNum = Number(budget) || 0;
+  const mealsNum = Number(meals) || 0;
+  const perMeal = mealsNum > 0 ? Math.round(budgetNum / mealsNum) : 0;
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-      className="card p-6 sm:p-8"
-    >
-      <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-3 text-xl leading-relaxed sm:text-2xl">
-        <span>나는</span>
-        <InlineInput
+    <div className="panel flex flex-col gap-3.5 p-4">
+      <div className="flex items-center gap-2">
+        <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-ramen" />
+        <span className="text-xs font-black tracking-[0.12em] text-ink">MISSION 입력</span>
+      </div>
+
+      <p className="font-extrabold leading-[2.1] text-ink" style={{ fontSize: "19px" }}>
+        나는{" "}
+        <MissionInput
           value={location}
           onChange={onLocationChange}
           placeholder="안암역"
-          width="w-28 sm:w-36"
-          suffix="근처에서"
-        />
-        <InlineInput
+          width="w-[5.6em]"
+        />{" "}
+        근처에서{" "}
+        <MissionInput
           value={budgetDisplay}
           onChange={(v) => onBudgetChange(v.replace(/[^0-9]/g, ""))}
           placeholder="40,000"
-          width="w-24 sm:w-28"
+          width="w-[4.6em]"
           inputMode="numeric"
-          suffix="원으로"
         />
-        <InlineInput
+        원 으로{" "}
+        <MissionInput
           value={meals}
           onChange={(v) => onMealsChange(v.replace(/[^0-9]/g, ""))}
           placeholder="8"
-          width="w-12"
+          width="w-[2.2em]"
           inputMode="numeric"
-          suffix="끼를"
         />
-        <span>해결해야 한다</span>
+        끼 를 버텨야 한다
       </p>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="mt-6 w-full rounded-xl bg-brand-600 px-6 py-3.5 text-lg font-bold text-white shadow-sm transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-neutral-300 sm:w-auto"
-      >
-        {loading ? "생존 전략 계산 중..." : "생존 플랜 보기"}
-      </button>
-    </form>
+      <div className="flex items-center justify-between rounded-xl border-2 border-dashed border-[#9AA18C] bg-[#EDEAD8] px-3 py-2.5">
+        <span className="text-[13px] font-bold text-[#4A5140]">한 끼 평균 가능 금액</span>
+        <span className="text-[17px] font-black text-ink">
+          {perMeal > 0 ? `${perMeal.toLocaleString("ko-KR")}원` : "-"}
+        </span>
+      </div>
+    </div>
   );
 }

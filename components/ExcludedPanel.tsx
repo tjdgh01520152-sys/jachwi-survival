@@ -10,9 +10,7 @@ interface Props {
 
 export default function ExcludedPanel({ excludedIds, pool, onRestore }: Props) {
   if (excludedIds.length === 0) {
-    return (
-      <p className="text-sm text-neutral-400">아직 숨긴 식당이 없어요.</p>
-    );
+    return <p className="text-sm font-bold text-[#6B7360]">아직 숨긴 식당이 없어요.</p>;
   }
 
   const lookup = new Map<string, string>();
@@ -20,17 +18,17 @@ export default function ExcludedPanel({ excludedIds, pool, onRestore }: Props) {
   pool?.convenience.forEach((r) => lookup.set(r.id, r.place_name));
 
   return (
-    <ul className="space-y-2">
+    <ul className="flex flex-col gap-2">
       {excludedIds.map((id) => (
         <li
           key={id}
-          className="flex items-center justify-between rounded-lg bg-neutral-50 px-3 py-2 text-sm"
+          className="flex items-center justify-between rounded-xl border-2 border-ink bg-[#EDEAD8] px-3 py-2 text-sm"
         >
-          <span className="text-neutral-700">{lookup.get(id) ?? id}</span>
+          <span className="font-bold text-ink">{lookup.get(id) ?? id}</span>
           <button
             type="button"
             onClick={() => onRestore(id)}
-            className="rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-600 hover:border-brand-400 hover:text-brand-600"
+            className="press rounded-full border-2 border-ink bg-white px-3 py-1 text-xs font-extrabold text-ink"
           >
             다시 보기
           </button>
