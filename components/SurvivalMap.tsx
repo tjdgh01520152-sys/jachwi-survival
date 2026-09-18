@@ -24,7 +24,7 @@ export default function SurvivalMap({ center, meals }: Props) {
   const overlaysRef = useRef<any[]>([]);
   const [state, setState] = useState<LoadState>("idle");
 
-  const appKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+  const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
   const pins = mappableMeals(meals);
 
   // SDK 로드 + 지도 최초 생성
