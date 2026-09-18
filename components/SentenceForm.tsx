@@ -43,9 +43,6 @@ export default function SentenceForm({
   onMealsChange,
 }: Props) {
   const budgetDisplay = budget ? Number(budget).toLocaleString("ko-KR") : "";
-  const budgetNum = Number(budget) || 0;
-  const mealsNum = Number(meals) || 0;
-  const perMeal = mealsNum > 0 ? Math.round(budgetNum / mealsNum) : 0;
 
   return (
     <div className="panel flex flex-col gap-3.5 p-4">
@@ -80,13 +77,6 @@ export default function SentenceForm({
         />
         끼 를 버텨야 한다
       </p>
-
-      <div className="flex items-center justify-between rounded-xl border-2 border-dashed border-[#9AA18C] bg-[#EDEAD8] px-3 py-2.5">
-        <span className="text-[13px] font-bold text-[#4A5140]">한 끼 평균 가능 금액</span>
-        <span className="text-[17px] font-black text-ink">
-          {perMeal > 0 ? `${perMeal.toLocaleString("ko-KR")}원` : "-"}
-        </span>
-      </div>
     </div>
   );
 }
