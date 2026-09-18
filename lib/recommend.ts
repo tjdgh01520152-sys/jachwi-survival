@@ -71,7 +71,10 @@ const AVOID_KEYWORD_MAP: Partial<Record<OptionKey, string[]>> = {
 const AVOID_PENALTY_PER_MATCH = 5; // "큰 감점"
 
 // 카페/디저트/간식류는 "한 끼 해결"이 목적인 이 서비스에서 아예 후보에 넣지 않는다.
+// "간식"은 Kakao 카테고리 자체가 "음식점 > 간식 > ..." 형태로 상위 분류를 매기는 경우가 많아서
+// (하위 키워드가 없어도) 이 한 단어만으로도 대부분 걸러진다.
 const SNACK_EXCLUDE_KEYWORDS = [
+  "간식",
   "카페",
   "디저트",
   "베이커리",
@@ -95,11 +98,45 @@ const SNACK_EXCLUDE_KEYWORDS = [
   "츄러스",
   "젤라또",
   "슬러시",
+  "주스",
+  "스무디",
+  "쉐이크",
 ];
 
 function isSnackPlace(categoryName: string, placeName: string): boolean {
   const text = `${categoryName} ${placeName}`;
   return SNACK_EXCLUDE_KEYWORDS.some((k) => text.includes(k));
+}
+
+// 프랜차이즈로 등록 안 된 "진짜" 동네 식당도 치킨/찜닭/양꼬치처럼 원래 나눠 먹는 메뉴라면
+// 나눠먹기 후보로 함께 넣는다. 특정 브랜드 2~3곳에만 의존하면 위치에 따라 나눠먹기 후보가
+// 0개가 되는 문제가 있어서, 카테고리/상호명 키워드로 폭넓게 잡는다.
+interface ShareDishRule {
+  keywords: string[];
+  totalMin: number;
+  totalMax: number;
+  servings: number;
+  tags: string[];
+}
+
+const SHARE_DISH_RULES: ShareDishRule[] = [
+  { keywords: ["치킨", "통닭"], totalMin: 18000, totalMax: 23000, servings: 2, tags: ["치킨", "나눠먹기"] },
+  { keywords: ["찜닭"], totalMin: 20000, totalMax: 28000, servings: 2, tags: ["찜닭", "나눠먹기", "매운맛"] },
+  { keywords: ["양꼬치"], totalMin: 25000, totalMax: 35000, servings: 2, tags: ["양꼬치", "나눠먹기"] },
+  { keywords: ["족발", "보쌈"], totalMin: 25000, totalMax: 35000, servings: 2, tags: ["족발보쌈", "나눠먹기", "고기"] },
+  { keywords: ["피자"], totalMin: 18000, totalMax: 25000, servings: 2, tags: ["피자", "나눠먹기"] },
+  {
+    keywords: ["삼겹살", "구이", "곱창", "막창"],
+    totalMin: 20000,
+    totalMax: 30000,
+    servings: 2,
+    tags: ["고기", "나눠먹기", "회식"],
+  },
+];
+
+function findShareDishRule(categoryName: string, placeName: string): ShareDishRule | null {
+  const text = `${categoryName} ${placeName}`;
+  return SHARE_DISH_RULES.find((rule) => rule.keywords.some((k) => text.includes(k))) ?? null;
 }
 
 function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
@@ -126,6 +163,30 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
         repeatQuota: 1,
         isCurated: false,
       });
+
+      // 치킨/찜닭/양꼬치처럼 원래 나눠 먹는 메뉴면, 같은 매장을 "나눠먹기" 후보로도 추가한다.
+      const shareRule = findShareDishRule(r.category_name, r.place_name);
+      if (shareRule) {
+        const totalPrice = Math.round((shareRule.totalMin + shareRule.totalMax) / 2 / 500) * 500;
+        const perPerson = Math.round(totalPrice / shareRule.servings / 100) * 100;
+        eatout.push({
+          id: `${r.id}::share`,
+          basePlaceId: r.id,
+          source: "eatout",
+          mealMode: "share",
+          menuName: `${guessMenuName(r)} (나눠먹기)`,
+          placeName: r.place_name,
+          category: shortCategory(r.category_name),
+          tags: shareRule.tags,
+          price: perPerson,
+          totalPrice,
+          servings: shareRule.servings,
+          distanceMeters: r.distanceMeters,
+          placeUrl: r.place_url,
+          repeatQuota: 1,
+          isCurated: false,
+        });
+      }
       continue;
     }
 
@@ -1045,8 +1106,11 @@ function enforceSpendTarget(
   let downgradeGuard = 0;
   while (spend > budget && downgradeGuard < result.length * 4) {
     downgradeGuard += 1;
+    // 나눠먹기 끼니는 이 후처리 대상에서 뺀다 — 어렵게 확보한 나눠먹기 자리를
+    // "비싸다"는 이유로 지워버리면 shareMin 보장이 깨진다.
     const order = result
       .map((_, idx) => idx)
+      .filter((idx) => result[idx].mealMode !== "share")
       .sort((a, b) => result[b].priceValue - result[a].priceValue);
 
     let changedInThisPass = false;
@@ -1088,8 +1152,10 @@ function enforceSpendTarget(
   const targetHigh = budget * SPEND_TARGET_HIGH;
 
   if (spend < targetLow) {
+    // 업그레이드 대상에서도 나눠먹기 끼니는 뺀다 (같은 이유: 이미 확보한 자리를 지우면 안 됨).
     const order = result
       .map((_, idx) => idx)
+      .filter((idx) => result[idx].mealMode !== "share")
       .sort((a, b) => result[a].priceValue - result[b].priceValue);
 
     for (const idx of order) {
@@ -1335,8 +1401,6 @@ function generateSinglePlan(
     if (best.c.mealMode === "share") shareableUsedCount += 1;
   }
 
-  const shareShortfall = shareableAllowed && shareableUsedCount < shareMin;
-
   const diversifiedMeals = enforceMealDiversity(
     meals,
     unifiedPool,
@@ -1362,6 +1426,13 @@ function generateSinglePlan(
   // 주의: 여기서 enforceMealDiversity를 한 번 더 돌리지 않는다. 그 함수는 가격 상한을 모르기 때문에,
   // 방금 다운그레이드로 예산을 맞춘 자리를 다시 비싼 후보로 되돌려버릴 수 있다(실제로 발견된 버그).
   // 업그레이드/다운그레이드 탐색 자체에 이웃 회피 로직이 이미 들어있어 중복 실행은 불필요하다.
+  //
+  // shareShortfall은 반드시 후처리(다양성 정리·지출 조정)까지 끝난 "최종" 끼니 목록 기준으로
+  // 다시 세야 한다. 후처리 과정에서 나눠먹기 끼니가 다른 후보로 바뀌어 사라질 수 있는데,
+  // 후처리 전 카운트를 그대로 쓰면 실제로는 부족한데도 "충분하다"고 잘못 표시하게 된다.
+  const finalShareCount = spendAdjustedMeals.filter((m) => m.mealMode === "share").length;
+  const shareShortfall = shareableAllowed && finalShareCount < shareMin;
+
   return { planId, planName, meals: spendAdjustedMeals, shareShortfall };
 }
 
