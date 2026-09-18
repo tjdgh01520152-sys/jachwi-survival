@@ -119,6 +119,9 @@ export interface MealPlanItem {
   shareInfo?: { totalPrice: number; servings: number }; // mealMode가 "share"일 때만
   sideSuggestion?: { menuName: string; price: number }; // "추가하면 좋은 사이드" 보조 제안
   isEmpty?: boolean; // 예산 초부족으로 이 끼니는 해결하지 못했음을 나타냄
+  // 데모용 내부 점수. 카카오 평점이 아니며 실제 리뷰 데이터도 아니다 (lib/survivalScore.ts 참고).
+  survivalScore?: number; // 0~100
+  survivalLabels?: string[]; // 예: ["가까움", "예산 적합", "든든함"]
 }
 
 export interface MinimalSurvivalResult {

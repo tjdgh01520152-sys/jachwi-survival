@@ -356,6 +356,40 @@ export const FRANCHISE_BRANDS: FranchiseBrand[] = [
       },
     ],
   },
+  {
+    brand: "이삭토스트",
+    matchKeywords: ["이삭토스트", "이삭"],
+    tags: ["토스트", "간편식", "절약", "아침"],
+    menus: [
+      {
+        id: "isaac_hamcheese",
+        menuName: "햄치즈 토스트",
+        mealMode: "single",
+        role: "main",
+        canBeStandaloneMeal: true,
+        price: 3600,
+        fullness: 4,
+      },
+      {
+        id: "isaac_hamspecial",
+        menuName: "햄스페셜 토스트",
+        mealMode: "single",
+        role: "main",
+        canBeStandaloneMeal: true,
+        price: 4100,
+        fullness: 5,
+      },
+      {
+        id: "isaac_baconbest",
+        menuName: "베이컨베스트 토스트",
+        mealMode: "single",
+        role: "main",
+        canBeStandaloneMeal: true,
+        price: 4600,
+        fullness: 5,
+      },
+    ],
+  },
 ];
 
 export interface MatchedFranchiseMenu {

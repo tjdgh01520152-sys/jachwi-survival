@@ -9,7 +9,7 @@ interface PriceRule {
 
 const PRICE_RULES: PriceRule[] = [
   {
-    keywords: ["김밥", "분식", "떡볶이", "컵밥"],
+    keywords: ["김밥", "분식", "떡볶이", "컵밥", "토스트"],
     min: 4500,
     max: 7500,
     tags: ["분식", "가벼움", "절약"],

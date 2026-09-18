@@ -13,6 +13,7 @@ import { representativePrice, toFranchiseBaseLabel } from "./pricing";
 import { describePersona } from "./storage";
 import { findFranchiseMenus, findSideMenu } from "./franchiseSeeds";
 import { OPTION_LABEL_BY_KEY } from "./optionLabels";
+import { computeSurvivalScore } from "./survivalScore";
 
 // ---------- 후보 단일 표현 ----------
 // 같은 물리적 매장이 단품/세트/나눠먹기 등 여러 "한 끼 해결 방식"으로 후보에 여러 번 등장할 수 있다.
@@ -38,6 +39,8 @@ interface UnifiedCandidate {
   placeUrl: string | null;
   repeatQuota: number; // 페널티 없이 반복 가능한 횟수
   isCurated: boolean;
+  survivalScore: number; // 0~100, 데모용 내부 점수 (카카오 평점 아님. lib/survivalScore.ts 참고)
+  survivalStaticLabels: string[]; // 거리/예산과 무관하게 고정된 라벨 (예: "든든함", "직접 요리")
 }
 
 // "좋아하는 취향" 옵션 → 매칭되면 취향 점수에 가점을 주는 키워드
@@ -70,42 +73,76 @@ const AVOID_KEYWORD_MAP: Partial<Record<OptionKey, string[]>> = {
 
 const AVOID_PENALTY_PER_MATCH = 5; // "큰 감점"
 
-// 카페/디저트/간식류는 "한 끼 해결"이 목적인 이 서비스에서 아예 후보에 넣지 않는다.
-// "간식"은 Kakao 카테고리 자체가 "음식점 > 간식 > ..." 형태로 상위 분류를 매기는 경우가 많아서
-// (하위 키워드가 없어도) 이 한 단어만으로도 대부분 걸러진다.
-const SNACK_EXCLUDE_KEYWORDS = [
+// 카페/디저트/간식/술집류는 "한 끼 해결"이 목적인 이 서비스에서 아예 후보 풀에 넣지 않는다
+// (점수 감점이 아니라 생성 단계에서 완전히 제거). "간식"은 Kakao 카테고리 자체가
+// "음식점 > 간식 > ..." 형태로 상위 분류를 매기는 경우가 많아서(하위 키워드가 없어도)
+// 이 한 단어만으로도 대부분 걸러진다.
+const CATEGORY_EXCLUDE_KEYWORDS = [
   "간식",
   "카페",
+  "커피",
   "디저트",
   "베이커리",
   "빵집",
   "제과",
+  "케이크",
+  "도넛",
   "아이스크림",
   "빙수",
-  "도넛",
   "와플",
   "크레페",
   "붕어빵",
   "타코야키",
   "마카롱",
-  "케이크",
-  "커피",
-  "음료",
+  "초콜릿",
   "버블티",
   "티하우스",
-  "초콜릿",
-  "토스트",
   "츄러스",
   "젤라또",
   "슬러시",
+  "음료",
   "주스",
   "스무디",
   "쉐이크",
+  "술집",
+  "호프",
+  "펍",
+  "바",
+  "이자카야",
+  "포차",
+  "요리주점",
+  "주점",
+  "맥주",
+  "칵테일",
+];
+
+// 위 키워드와 겹칠 수 있어도 자취생 한 끼로 분명히 쓸 수 있는 메뉴는 절대 제외하지 않는다.
+// (예: "이삭토스트"는 "토스트"가 간식처럼 보이지만 실제로는 한 끼 대용, "치킨"/"피자"/"마라탕"/
+// "찜닭"은 나눠먹기 메뉴로 쓰이므로 술집 관련 키워드와 무관하게 항상 유지)
+const CATEGORY_KEEP_KEYWORDS = [
+  "분식",
+  "김밥",
+  "국수",
+  "도시락",
+  "덮밥",
+  "백반",
+  "찌개",
+  "국밥",
+  "돈까스",
+  "라멘",
+  "쌀국수",
+  "버거",
+  "토스트",
+  "피자",
+  "치킨",
+  "마라탕",
+  "찜닭",
 ];
 
 function isSnackPlace(categoryName: string, placeName: string): boolean {
   const text = `${categoryName} ${placeName}`;
-  return SNACK_EXCLUDE_KEYWORDS.some((k) => text.includes(k));
+  if (CATEGORY_KEEP_KEYWORDS.some((k) => text.includes(k))) return false;
+  return CATEGORY_EXCLUDE_KEYWORDS.some((k) => text.includes(k));
 }
 
 // 프랜차이즈로 등록 안 된 "진짜" 동네 식당도 치킨/찜닭/양꼬치처럼 원래 나눠 먹는 메뉴라면
@@ -148,6 +185,12 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
     const matches = findFranchiseMenus(r.place_name);
 
     if (matches.length === 0) {
+      const nonFranchiseScore = computeSurvivalScore({
+        categoryName: r.category_name,
+        placeName: r.place_name,
+        source: "eatout",
+        isCurated: false,
+      });
       eatout.push({
         id: r.id,
         basePlaceId: r.id,
@@ -162,6 +205,8 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
         placeUrl: r.place_url,
         repeatQuota: 1,
         isCurated: false,
+        survivalScore: nonFranchiseScore.score,
+        survivalStaticLabels: nonFranchiseScore.labels,
       });
 
       // 치킨/찜닭/양꼬치처럼 원래 나눠 먹는 메뉴면, 같은 매장을 "나눠먹기" 후보로도 추가한다.
@@ -185,6 +230,8 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           placeUrl: r.place_url,
           repeatQuota: 1,
           isCurated: false,
+          survivalScore: nonFranchiseScore.score,
+          survivalStaticLabels: nonFranchiseScore.labels,
         });
       }
       continue;
@@ -194,6 +241,13 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
       // 사이드/컵밥류(canBeStandaloneMeal=false)는 단독 끼니 후보로 넣지 않는다.
       // 메인/나눠먹기 메뉴가 선택됐을 때 "추가하면 좋은 사이드"로만 곁들여진다.
       if (!menu.canBeStandaloneMeal) continue;
+
+      const franchiseScore = computeSurvivalScore({
+        categoryName: r.category_name,
+        placeName: r.place_name,
+        source: "eatout",
+        isCurated: true,
+      });
 
       if (menu.mealMode === "share") {
         const perPerson = Math.round(menu.totalPrice / menu.servings);
@@ -214,6 +268,8 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           placeUrl: r.place_url,
           repeatQuota: 1,
           isCurated: true,
+          survivalScore: franchiseScore.score,
+          survivalStaticLabels: franchiseScore.labels,
         });
       } else {
         eatout.push({
@@ -233,44 +289,66 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           placeUrl: r.place_url,
           repeatQuota: 1,
           isCurated: true,
+          survivalScore: franchiseScore.score,
+          survivalStaticLabels: franchiseScore.labels,
         });
       }
     }
   }
 
-  const convenience: UnifiedCandidate[] = pool.convenience.map((c) => ({
-    id: c.id,
-    basePlaceId: c.id,
-    source: "convenience",
-    mealMode: "convenience",
-    menuName: "편의점 한 끼 (도시락/삼각김밥)",
-    placeName: c.place_name,
-    category: "편의점",
-    tags: c.tags,
-    price: representativePrice(c.priceMin, c.priceMax),
-    distanceMeters: c.distanceMeters,
-    placeUrl: c.place_url,
-    repeatQuota: 2,
-    isCurated: false,
-  }));
+  const convenience: UnifiedCandidate[] = pool.convenience.map((c) => {
+    const cvsScore = computeSurvivalScore({
+      categoryName: c.category_name,
+      placeName: c.place_name,
+      source: "convenience",
+      isCurated: false,
+    });
+    return {
+      id: c.id,
+      basePlaceId: c.id,
+      source: "convenience",
+      mealMode: "convenience",
+      menuName: "편의점 한 끼 (도시락/삼각김밥)",
+      placeName: c.place_name,
+      category: "편의점",
+      tags: c.tags,
+      price: representativePrice(c.priceMin, c.priceMax),
+      distanceMeters: c.distanceMeters,
+      placeUrl: c.place_url,
+      repeatQuota: 2,
+      isCurated: false,
+      survivalScore: cvsScore.score,
+      survivalStaticLabels: cvsScore.labels,
+    };
+  });
 
-  const cooking: UnifiedCandidate[] = pool.cooking.map((c) => ({
-    id: c.id,
-    basePlaceId: c.id,
-    source: "cooking",
-    mealMode: "cooking",
-    menuName: c.menuName,
-    placeName: "직접 요리",
-    category: c.category,
-    tags: c.tags,
-    price: c.pricePerMeal,
-    totalCost: c.totalCost,
-    mealsCovered: c.meals,
-    distanceMeters: null,
-    placeUrl: null,
-    repeatQuota: c.repeatable,
-    isCurated: false,
-  }));
+  const cooking: UnifiedCandidate[] = pool.cooking.map((c) => {
+    const cookScore = computeSurvivalScore({
+      categoryName: c.category,
+      placeName: c.menuName,
+      source: "cooking",
+      isCurated: false,
+    });
+    return {
+      id: c.id,
+      basePlaceId: c.id,
+      source: "cooking",
+      mealMode: "cooking",
+      menuName: c.menuName,
+      placeName: "직접 요리",
+      category: c.category,
+      tags: c.tags,
+      price: c.pricePerMeal,
+      totalCost: c.totalCost,
+      mealsCovered: c.meals,
+      distanceMeters: null,
+      placeUrl: null,
+      repeatQuota: c.repeatable,
+      isCurated: false,
+      survivalScore: cookScore.score,
+      survivalStaticLabels: cookScore.labels,
+    };
+  });
 
   return [...eatout, ...convenience, ...cooking];
 }
@@ -615,6 +693,11 @@ function scoreCandidate(
   // 작은 흔들림을 더한다. 예산/거리 같은 강한 신호를 뒤집을 만큼 크지는 않다.
   const jitter = seededJitter(c.id, ctx.seed ?? 0) * 1.5;
 
+  // 데모용 내부 점수(생존 적합도)는 가격/거리/취향보다 훨씬 약하게, 동점 후보를 가르는
+  // 보조 기준 정도로만 반영한다. 사용자가 "안 끌려요"/"이곳 제외하기"를 누른 곳은
+  // dislikePenalty·excludedIds가 이 항보다 훨씬 크게 작동해서 항상 우선한다.
+  const survivalScoreAdjust = c.survivalScore >= 80 ? 1.5 : c.survivalScore < 60 ? -1.5 : 0;
+
   const score =
     budget * ctx.profile.wBudget +
     taste * ctx.profile.wTaste +
@@ -626,10 +709,11 @@ function scoreCandidate(
     sourceBoost -
     setPenalty +
     shareBoost +
-    jitter;
+    jitter +
+    survivalScoreAdjust;
 
-  if (distance >= 4) reasonTags.push("가까운 거리");
-  if (budget >= 4) reasonTags.push("예산 여유");
+  if (distance >= 4) reasonTags.push("가까움");
+  if (budget >= 4) reasonTags.push("예산 적합");
   if (c.source === "cooking") reasonTags.push("직접 요리로 절약");
   if (c.source === "convenience") reasonTags.push("편의점으로 빠르게 해결");
 
@@ -929,7 +1013,7 @@ function enforceMealDiversity(
           note = `${prev.category}이(가) 연속되지 않도록 다른 메뉴로 배치했어요.`;
         }
         const reason = `${note} ${buildReason(replacement.c, replacement.reasonTags, location)}`;
-        result[i] = toMealPlanItem(curr.mealIndex, replacement.c, reason, sideSuggestion);
+        result[i] = toMealPlanItem(curr.mealIndex, replacement.c, reason, sideSuggestion, replacement.reasonTags);
       }
       // 대체 후보를 못 찾으면(선택지가 너무 적으면) 그대로 둔다.
     }
@@ -1134,7 +1218,7 @@ function enforceSpendTarget(
           downgrade.reasonTags,
           location
         )}`;
-        result[idx] = toMealPlanItem(result[idx].mealIndex, downgrade.c, reason, undefined);
+        result[idx] = toMealPlanItem(result[idx].mealIndex, downgrade.c, reason, undefined, downgrade.reasonTags);
         changedInThisPass = true;
       }
     }
@@ -1182,7 +1266,7 @@ function enforceSpendTarget(
         const sideSuggestion = pickSideSuggestion(upgrade.c, options, remainingAfter);
         const note = buildSpendUpgradeNote(current, upgrade.c);
         const reason = `${note} ${buildReason(upgrade.c, upgrade.reasonTags, location)}`;
-        result[idx] = toMealPlanItem(current.mealIndex, upgrade.c, reason, sideSuggestion);
+        result[idx] = toMealPlanItem(current.mealIndex, upgrade.c, reason, sideSuggestion, upgrade.reasonTags);
       }
     }
   }
@@ -1245,7 +1329,8 @@ function toMealPlanItem(
   mealIndex: number,
   c: UnifiedCandidate,
   reason: string,
-  sideSuggestion?: { menuName: string; price: number }
+  sideSuggestion?: { menuName: string; price: number },
+  contextTags: string[] = []
 ): MealPlanItem {
   let priceLabel: string;
   if (c.mealMode === "share" && c.totalPrice !== undefined && c.servings !== undefined) {
@@ -1283,6 +1368,8 @@ function toMealPlanItem(
         ? { totalPrice: c.totalPrice, servings: c.servings }
         : undefined,
     sideSuggestion,
+    survivalScore: c.survivalScore,
+    survivalLabels: Array.from(new Set([...c.survivalStaticLabels, ...contextTags])).slice(0, 4),
   };
 }
 
@@ -1393,7 +1480,7 @@ function generateSinglePlan(
     const remainingAfter = remainingBudget - best.c.price;
     const sideSuggestion = pickSideSuggestion(best.c, options, remainingAfter);
     const reason = buildReason(best.c, best.reasonTags, location);
-    meals.push(toMealPlanItem(i, best.c, reason, sideSuggestion));
+    meals.push(toMealPlanItem(i, best.c, reason, sideSuggestion, best.reasonTags));
 
     placeUsage.set(best.c.basePlaceId, (placeUsage.get(best.c.basePlaceId) ?? 0) + 1);
     categoryUsage.set(best.c.category, (categoryUsage.get(best.c.category) ?? 0) + 1);
@@ -1734,7 +1821,7 @@ export function replaceMeal(
   const remainingAfter = remainingBudget - best.c.price;
   const sideSuggestion = pickSideSuggestion(best.c, optionSet, remainingAfter);
   const reason = buildReason(best.c, best.reasonTags, location);
-  const newMealItem = toMealPlanItem(mealIndex, best.c, reason, sideSuggestion);
+  const newMealItem = toMealPlanItem(mealIndex, best.c, reason, sideSuggestion, best.reasonTags);
 
   const swappedMeals = plan.meals.map((m) => (m.mealIndex === mealIndex ? newMealItem : m));
   const swappedIndex = swappedMeals.findIndex((m) => m.mealIndex === mealIndex);
