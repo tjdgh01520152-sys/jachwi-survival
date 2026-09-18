@@ -244,10 +244,16 @@ export default function Home() {
           자취생 생존기
         </p>
         <h1 className="mt-1 text-2xl font-extrabold text-neutral-900 sm:text-3xl">
-          남은 식비로, 며칠을 버틸 수 있을까?
+          빠듯한 식비,
+          <br />
+          끝까지 버틸 수 있을까?
         </h1>
         <p className="mt-2 text-sm text-neutral-500">
-          예산 · 위치 · 끼니 수를 입력하면 실제 주변 식당과 요리를 섞어 생존 플랜을 짜드려요.
+          예산 · 위치 · 끼니 수만 입력하면
+          <br />
+          근처 식당, 편의점, 직접요리를 섞어
+          <br />
+          현실적인 생존 플랜을 짜드려요.
         </p>
       </header>
 
