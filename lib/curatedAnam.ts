@@ -523,6 +523,24 @@ const CURATED_ANAM_RAW: CuratedAnamRaw[] = [
     representativePrice: 10000,
     shareTotalPrice: 20000,
     },
+  },
+  {
+    id: "10501014",
+    place_name: "서울쌈냉면 고대점",
+    category_name: "음식점 > 한식 > 냉면",
+    address_name: "서울 성북구 안암동5가 147-9",
+    road_address_name: "서울 성북구 개운사길 21-4",
+    x: "127.028871568485",
+    y: "37.5874787976777",
+    distance: "142",
+    place_url: "http://place.map.kakao.com/10501014",
+    priceMin: 10500,
+    priceMax: 10500,
+    curated: {
+    rating: 4.0,
+    type: "single",
+    representativePrice: 10500,
+    },
   }
 ];
 
