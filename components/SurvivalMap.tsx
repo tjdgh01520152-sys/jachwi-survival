@@ -81,8 +81,9 @@ export default function SurvivalMap({ center, meals }: Props) {
     if (pins.length > 0) {
       map.setBounds(bounds, 48, 48, 48, 48);
     } else {
+      // 전부 직접요리인 플랜이라 지도에 찍을 매장이 없어도, 내 위치는 항상 보여준다.
       map.setCenter(centerPos);
-      map.setLevel(4);
+      map.setLevel(3);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, center?.lat, center?.lng, JSON.stringify(pins.map((p) => [p.mealIndex, p.lat, p.lng, p.source]))]);
@@ -105,6 +106,12 @@ export default function SurvivalMap({ center, meals }: Props) {
           <PlaceholderMap center={center} pins={pins} />
         )}
       </div>
+
+      {center && pins.length === 0 && (
+        <p className="mt-2 text-xs text-neutral-400">
+          이번 플랜은 집밥 위주라 지도에는 내 위치만 표시돼요.
+        </p>
+      )}
     </div>
   );
 }
@@ -139,9 +146,7 @@ function PlaceholderMap({
       <div className="flex items-center gap-2 rounded-lg bg-neutral-800 px-3 py-2 text-sm font-semibold text-white">
         <span>내 위치</span>
       </div>
-      {pins.length === 0 ? (
-        <p className="mt-2 text-sm text-neutral-400">지도에 표시할 실제 매장이 없어요.</p>
-      ) : (
+      {pins.length === 0 ? null : (
         pins.map((m) => (
           <div
             key={`${m.mealIndex}-${m.placeId}`}
