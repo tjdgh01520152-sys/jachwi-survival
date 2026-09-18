@@ -131,6 +131,9 @@ export interface MealPlanItem {
   // 데모용 내부 점수. 카카오 평점이 아니며 실제 리뷰 데이터도 아니다 (lib/survivalScore.ts 참고).
   survivalScore?: number; // 0~100
   survivalLabels?: string[]; // 예: ["가까움", "예산 적합", "든든함"]
+  // 결과 지도(안암 생존 지도) 표시용 좌표. 직접요리처럼 물리적 위치가 없으면 null/undefined.
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface MinimalSurvivalResult {

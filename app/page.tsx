@@ -32,6 +32,7 @@ import PlanTabs from "@/components/PlanTabs";
 import MealCard from "@/components/MealCard";
 import ExcludedPanel from "@/components/ExcludedPanel";
 import ShortfallPanel from "@/components/ShortfallPanel";
+import SurvivalMap from "@/components/SurvivalMap";
 
 export default function Home() {
   const [location, setLocation] = useState("안암역");
@@ -294,6 +295,11 @@ export default function Home() {
       {generated && activeEntry && (
         <section className="mt-8 space-y-5">
           <SummaryDashboard summary={activeEntry.summary} />
+
+          <SurvivalMap
+            center={pool?.center ? { lat: pool.center.y, lng: pool.center.x } : null}
+            meals={activeEntry.plan.meals}
+          />
 
           <div className="flex flex-wrap items-center justify-between gap-3">
             <PlanTabs plans={generated} activePlanId={activePlanId} onSelect={setActivePlanId} />

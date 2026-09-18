@@ -41,6 +41,16 @@ interface UnifiedCandidate {
   isCurated: boolean;
   survivalScore: number; // 0~100, 데모용 내부 점수 (카카오 평점 아님. lib/survivalScore.ts 참고)
   survivalStaticLabels: string[]; // 거리/예산과 무관하게 고정된 라벨 (예: "든든함", "직접 요리")
+  lat: number | null; // 결과 지도 표시용. 직접요리는 물리적 위치가 없어 null.
+  lng: number | null;
+}
+
+/** Kakao 응답의 x(경도)/y(위도) 문자열을 지도용 숫자 좌표로 변환한다. 파싱 실패 시 null. */
+function toLatLng(place: { x: string; y: string }): { lat: number | null; lng: number | null } {
+  const lat = Number(place.y);
+  const lng = Number(place.x);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return { lat: null, lng: null };
+  return { lat, lng };
 }
 
 // "좋아하는 취향" 옵션 → 매칭되면 취향 점수에 가점을 주는 키워드
@@ -215,6 +225,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
             isCurated: false,
             survivalScore: nonFranchiseScore.score,
             survivalStaticLabels: nonFranchiseScore.labels,
+            ...toLatLng(r),
           });
         }
         if (curated.type === "share" || curated.type === "both") {
@@ -237,6 +248,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
             isCurated: false,
             survivalScore: nonFranchiseScore.score,
             survivalStaticLabels: nonFranchiseScore.labels,
+            ...toLatLng(r),
           });
         }
         continue;
@@ -258,6 +270,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
         isCurated: false,
         survivalScore: nonFranchiseScore.score,
         survivalStaticLabels: nonFranchiseScore.labels,
+        ...toLatLng(r),
       });
 
       // 치킨/찜닭/양꼬치처럼 원래 나눠 먹는 메뉴면, 같은 매장을 "나눠먹기" 후보로도 추가한다.
@@ -283,6 +296,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           isCurated: false,
           survivalScore: nonFranchiseScore.score,
           survivalStaticLabels: nonFranchiseScore.labels,
+          ...toLatLng(r),
         });
       }
       continue;
@@ -322,6 +336,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           isCurated: true,
           survivalScore: franchiseScore.score,
           survivalStaticLabels: franchiseScore.labels,
+          ...toLatLng(r),
         });
       } else {
         eatout.push({
@@ -343,6 +358,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
           isCurated: true,
           survivalScore: franchiseScore.score,
           survivalStaticLabels: franchiseScore.labels,
+          ...toLatLng(r),
         });
       }
     }
@@ -371,6 +387,7 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
       isCurated: false,
       survivalScore: cvsScore.score,
       survivalStaticLabels: cvsScore.labels,
+      ...toLatLng(c),
     };
   });
 
@@ -399,6 +416,8 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
       isCurated: false,
       survivalScore: cookScore.score,
       survivalStaticLabels: cookScore.labels,
+      lat: null,
+      lng: null,
     };
   });
 
@@ -1422,6 +1441,8 @@ function toMealPlanItem(
     sideSuggestion,
     survivalScore: c.survivalScore,
     survivalLabels: Array.from(new Set([...c.survivalStaticLabels, ...contextTags])).slice(0, 4),
+    lat: c.lat,
+    lng: c.lng,
   };
 }
 
