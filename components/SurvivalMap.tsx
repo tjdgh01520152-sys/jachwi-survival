@@ -55,6 +55,22 @@ export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Pro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appKey, !!center]);
 
+  // 넓은 화면에서 지도 카드가 flex 레이아웃 폭에 맞춰 나중에 리사이즈되면(예: lg: 가로 배치),
+  // 카카오맵이 생성 시점의 좁은 크기를 그대로 캐싱해서 확대/축소가 이상하게 보이는 문제가 있다.
+  // 컨테이너 크기가 바뀔 때마다 relayout()으로 다시 계산하고 내 위치로 중심을 재조정한다.
+  useEffect(() => {
+    if (state !== "ready" || !mapRef.current || !containerRef.current || !center || !window.kakao) return;
+    const kakao = window.kakao;
+    const map = mapRef.current;
+    const el = containerRef.current;
+    const ro = new ResizeObserver(() => {
+      map.relayout();
+      map.setCenter(new kakao.maps.LatLng(center.lat, center.lng));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [state, center?.lat, center?.lng]);
+
   // 끼니/위치가 바뀔 때마다 핀을 다시 그린다 (이것만 바꾸기 / 제외하기 / 다시 추천 모두 여기로 흘러온다)
   useEffect(() => {
     if (state !== "ready" || !mapRef.current || !center || !window.kakao) return;
@@ -81,7 +97,11 @@ export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Pro
     overlaysRef.current.forEach((o) => o.setMap(map));
 
     if (pins.length > 0) {
+      // 핀이 다 보이는 최소 축척을 구하되, 내 위치가 항상 중심이 되도록 다시 맞추고
+      // 너무 멀리 줌아웃되지 않게 상한선을 둔다(핀이 멀리 흩어져 있어도 "내 위치 기준" 확대 유지).
       map.setBounds(bounds, 48, 48, 48, 48);
+      map.setCenter(centerPos);
+      if (map.getLevel() > 5) map.setLevel(5);
     } else {
       // 전부 직접요리인 플랜이라 지도에 찍을 매장이 없어도, 내 위치는 항상 보여준다.
       map.setCenter(centerPos);
@@ -97,7 +117,7 @@ export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Pro
   ]);
 
   return (
-    <div className="panel flex flex-col gap-2.5 p-[15px]">
+    <div className="panel flex h-full flex-col gap-2.5 p-[15px]">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
         <p className="text-[15px] font-black text-ink">안암 생존 지도</p>
         <div className="flex items-center gap-2.5 text-[11px] font-extrabold text-ink">
@@ -107,7 +127,7 @@ export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Pro
         </div>
       </div>
 
-      <div className="relative h-[190px] overflow-hidden rounded-[14px] border-[3px] border-ink">
+      <div className="relative min-h-[190px] flex-1 overflow-hidden rounded-[14px] border-[3px] border-ink">
         {state === "ready" || state === "loading" ? (
           <div ref={containerRef} className="h-full w-full bg-[#DDE7CB]" />
         ) : (
