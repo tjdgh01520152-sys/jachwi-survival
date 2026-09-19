@@ -46,7 +46,7 @@ export default function OptionChips({ selected, onToggle }: Props) {
                     type="button"
                     onClick={() => onToggle(opt.key)}
                     aria-pressed={on}
-                    className={`press rounded-full border-[3px] px-3.5 py-2 text-[13px] font-extrabold transition-colors ${
+                    className={`press min-h-[44px] rounded-full border-[3px] px-3.5 py-2 text-[13px] font-extrabold transition-colors ${
                       on
                         ? "border-ink bg-ramen text-[#FFF8EC]"
                         : "border-[#C9CDBD] bg-white text-ink"
@@ -60,7 +60,7 @@ export default function OptionChips({ selected, onToggle }: Props) {
                 <button
                   type="button"
                   onClick={() => toggleGroup(group)}
-                  className="press rounded-full border-[3px] border-dashed border-[#B4B9A8] bg-transparent px-3.5 py-2 text-[13px] font-extrabold text-[#6B7360]"
+                  className="press min-h-[44px] rounded-full border-[3px] border-dashed border-[#B4B9A8] bg-transparent px-3.5 py-2 text-[13px] font-extrabold text-[#6B7360]"
                 >
                   {isExpanded ? "접기" : `더 보기 +${hiddenCount}`}
                 </button>

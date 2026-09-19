@@ -51,10 +51,28 @@ const config: Config = {
           "0%, 92%, 100%": { opacity: "1" },
           "95%": { opacity: "0.15" },
         },
+        shimmer: {
+          "0%": { backgroundPosition: "140% 0" },
+          "100%": { backgroundPosition: "-40% 0" },
+        },
+        steam: {
+          "0%": { transform: "translateY(0) scaleX(1)", opacity: "0" },
+          "25%": { opacity: "0.9" },
+          "100%": { transform: "translateY(-22px) scaleX(1.5)", opacity: "0" },
+        },
+        bar: {
+          "0%": { width: "8%" },
+          "60%": { width: "72%" },
+          "100%": { width: "96%" },
+        },
       },
       animation: {
         bob: "bob 3.4s ease-in-out infinite",
+        "bob-fast": "bob 1.6s ease-in-out infinite",
         blink: "blink 5s infinite",
+        shimmer: "shimmer 1.2s linear infinite",
+        steam: "steam 2.2s ease-out infinite",
+        bar: "bar 1.8s ease-out forwards",
       },
     },
   },

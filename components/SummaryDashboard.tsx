@@ -2,6 +2,8 @@
 
 import { PlanSummary } from "@/lib/types";
 
+const INK = "#12140F";
+
 // 등급 심각도에 따라 팔레트 안에서 색을 골라 기존 "위험할수록 눈에 띄게" 정보를 유지한다.
 const GRADE_BADGE: Record<string, string> = {
   "텅장 경보": "bg-ramen text-[#FFF8EC]",
@@ -15,6 +17,30 @@ function won(n: number) {
   return `${n.toLocaleString("ko-KR")}원`;
 }
 
+function GradeFace() {
+  return (
+    <svg
+      viewBox="0 0 90 90"
+      width="52"
+      height="52"
+      fill="none"
+      stroke={INK}
+      strokeWidth={5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="shrink-0"
+    >
+      <circle cx="45" cy="45" r="30" fill="#FFE2C4" />
+      <path d="M15 43 Q17 11 45 11 Q73 11 75 43 Q60 29 45 31 Q30 33 15 43 Z" fill={INK} />
+      <circle cx="35" cy="48" r="3.6" fill={INK} stroke="none" />
+      <circle cx="55" cy="48" r="3.6" fill={INK} stroke="none" />
+      <path d="M28 40 L37 43" />
+      <path d="M62 40 L53 43" />
+      <path d="M36 62 q4.5 5 9 0 q4.5 -5 9 0" strokeWidth={4} />
+    </svg>
+  );
+}
+
 export default function SummaryDashboard({ summary }: { summary: PlanSummary }) {
   const badgeClass = GRADE_BADGE[summary.survivalGrade] ?? "bg-moss text-ink";
 
@@ -22,31 +48,48 @@ export default function SummaryDashboard({ summary }: { summary: PlanSummary }) 
     <div className="panel flex flex-col gap-3 p-4">
       <p className="text-xs font-extrabold text-[#6B7360]">생존 등급</p>
 
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span
-          className={`inline-block rounded-full border-[3px] border-ink px-4 py-2 font-heading ${badgeClass}`}
-          style={{ fontSize: "20px" }}
-        >
-          {summary.survivalGrade}
-        </span>
-        <span className="text-[13px] font-extrabold text-[#3C4633]">{summary.survivalMessage}</span>
+      <div className="flex items-start gap-3">
+        <GradeFace />
+        <div className="flex flex-1 flex-col gap-1.5">
+          <span
+            className={`self-start inline-block rounded-full border-[3px] border-ink px-4 py-2 font-heading ${badgeClass}`}
+            style={{ fontSize: "20px" }}
+          >
+            {summary.survivalGrade}
+          </span>
+          <span className="text-[13px] font-extrabold text-[#3C4633]">{summary.survivalMessage}</span>
+          {summary.survivalSubtitle && (
+            <span className="text-xs font-bold text-[#6B7360]">칭호 · {summary.survivalSubtitle}</span>
+          )}
+        </div>
       </div>
 
-      {summary.survivalSubtitle && (
-        <p className="text-xs font-bold text-[#6B7360]">칭호 · {summary.survivalSubtitle}</p>
-      )}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-1 rounded-[14px] border-[3px] border-ink bg-coin px-3.5 py-3">
+          <span className="text-xs font-extrabold text-[#4A5140]">예산 사용률</span>
+          <span
+            className={`font-heading leading-none ${summary.budgetUsageRatio > 100 ? "text-ramen" : "text-ink"}`}
+            style={{ fontSize: "30px" }}
+          >
+            {summary.budgetUsageRatio}%
+          </span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-[14px] border-[3px] border-ink bg-ink px-3.5 py-3">
+          <span className="text-xs font-extrabold text-moss">남은 돈</span>
+          <span
+            className={`font-heading leading-none ${summary.remaining < 0 ? "text-ramen" : "text-paper"}`}
+            style={{ fontSize: "30px" }}
+          >
+            {won(summary.remaining)}
+          </span>
+        </div>
+      </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <StatTile label="총 예산" value={won(summary.totalBudget)} />
-        <StatTile label="예상 지출" value={won(summary.estimatedSpend)} />
-        <StatTile
-          label="예산 사용률"
-          value={`${summary.budgetUsageRatio}%`}
-          highlight={summary.budgetUsageRatio > 100}
-        />
-        <StatTile label="남은 돈" value={won(summary.remaining)} alert={summary.remaining < 0} />
-        <StatTile label="한 끼 평균" value={won(summary.avgPerMeal)} />
-        <StatTile label="평균 거리" value={`${summary.averageDistance}m`} />
+      <div className="grid grid-cols-2 gap-x-3.5 gap-y-1.5">
+        <InfoRow label="총 예산" value={won(summary.totalBudget)} />
+        <InfoRow label="예상 지출" value={won(summary.estimatedSpend)} />
+        <InfoRow label="한 끼 평균" value={won(summary.avgPerMeal)} />
+        <InfoRow label="평균 거리" value={`${summary.averageDistance}m`} />
       </div>
 
       <div className="flex flex-wrap gap-[7px]">
@@ -61,27 +104,11 @@ export default function SummaryDashboard({ summary }: { summary: PlanSummary }) 
   );
 }
 
-function StatTile({
-  label,
-  value,
-  highlight,
-  alert,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-  alert?: boolean;
-}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={`flex flex-col gap-[3px] rounded-xl border-[3px] border-ink px-2.5 py-2.5 ${
-        highlight ? "bg-coin" : "bg-white"
-      }`}
-    >
-      <span className={`text-[11px] font-bold ${highlight ? "text-[#4A5140]" : "text-[#6B7360]"}`}>
-        {label}
-      </span>
-      <span className={`text-[15px] font-black ${alert ? "text-ramen" : "text-ink"}`}>{value}</span>
+    <div className="flex items-baseline justify-between gap-2">
+      <span className="text-xs font-bold text-[#6B7360]">{label}</span>
+      <span className="text-[13px] font-extrabold text-ink">{value}</span>
     </div>
   );
 }

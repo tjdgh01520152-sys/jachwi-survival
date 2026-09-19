@@ -28,7 +28,7 @@ function MissionInput({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       inputMode={inputMode}
-      className={`${width} border-0 border-b-[3px] border-ink bg-coin px-1.5 py-0.5 text-center font-black text-ink outline-none placeholder:text-ink/40`}
+      className={`${width} border-0 border-b-[3px] border-ink bg-coin px-2 py-[9px] text-center font-black text-ink outline-none placeholder:text-ink/40`}
       style={{ fontSize: "19px" }}
     />
   );

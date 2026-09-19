@@ -18,7 +18,7 @@ export default function PlanTabs({ plans, activePlanId, onSelect }: Props) {
             key={plan.planId}
             type="button"
             onClick={() => onSelect(plan.planId)}
-            className={`press flex flex-1 basis-[130px] flex-col items-start gap-[3px] rounded-[14px] border-[3px] px-[13px] py-[11px] text-left ${
+            className={`press flex min-h-[44px] flex-1 basis-[130px] flex-col items-start gap-[3px] rounded-[14px] border-[3px] px-[13px] py-[11px] text-left ${
               active ? "border-ramen bg-[#FFE9E4]" : "border-ink bg-paper"
             }`}
           >

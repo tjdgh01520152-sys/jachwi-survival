@@ -7,6 +7,7 @@ import { loadKakaoMaps } from "@/lib/kakaoMapsLoader";
 interface Props {
   center: { lat: number; lng: number } | null; // 내 위치
   meals: MealPlanItem[]; // 현재 보고 있는 플랜의 끼니들
+  activeMealIndex?: number; // 끼니 카드를 눌렀을 때 강조할 mealIndex (-1 또는 미지정이면 없음)
 }
 
 type LoadState = "idle" | "loading" | "ready" | "no-key" | "error";
@@ -18,7 +19,7 @@ function mappableMeals(meals: MealPlanItem[]) {
   );
 }
 
-export default function SurvivalMap({ center, meals }: Props) {
+export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
@@ -72,7 +73,8 @@ export default function SurvivalMap({ center, meals }: Props) {
     for (const meal of pins) {
       const pos = new kakao.maps.LatLng(meal.lat as number, meal.lng as number);
       bounds.extend(pos);
-      const style = meal.source === "convenience" ? "convenience" : "eatout";
+      const isActive = meal.mealIndex === activeMealIndex;
+      const style = isActive ? "active" : meal.source === "convenience" ? "convenience" : "eatout";
       overlaysRef.current.push(makePinOverlay(kakao, pos, `${meal.mealIndex}끼`, style, meal.placeName));
     }
 
@@ -86,7 +88,13 @@ export default function SurvivalMap({ center, meals }: Props) {
       map.setLevel(3);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, center?.lat, center?.lng, JSON.stringify(pins.map((p) => [p.mealIndex, p.lat, p.lng, p.source]))]);
+  }, [
+    state,
+    center?.lat,
+    center?.lng,
+    activeMealIndex,
+    JSON.stringify(pins.map((p) => [p.mealIndex, p.lat, p.lng, p.source])),
+  ]);
 
   return (
     <div className="panel flex flex-col gap-2.5 p-[15px]">
@@ -177,7 +185,7 @@ function makePinOverlay(
   kakao: any,
   position: any,
   label: string,
-  style: "center" | "eatout" | "convenience",
+  style: "center" | "eatout" | "convenience" | "active",
   title?: string
 ) {
   const el = document.createElement("div");
@@ -191,8 +199,14 @@ function makePinOverlay(
   el.style.whiteSpace = "nowrap";
   el.style.padding = "5px 10px";
   el.style.border = "3px solid #12140F";
+  el.style.transform = style === "active" ? "scale(1.25)" : "scale(1)";
+  el.style.transition = "transform 0.15s ease";
   el.style.background =
-    style === "center" ? "#12140F" : style === "convenience" ? "#1B7F3B" : "#E5533D";
+    style === "center" || style === "active"
+      ? "#12140F"
+      : style === "convenience"
+        ? "#1B7F3B"
+        : "#E5533D";
   el.textContent = label;
   if (title) el.title = title;
 
