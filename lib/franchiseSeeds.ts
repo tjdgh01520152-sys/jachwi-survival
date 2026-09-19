@@ -390,6 +390,33 @@ export const FRANCHISE_BRANDS: FranchiseBrand[] = [
       },
     ],
   },
+  {
+    // 일반 "분식/떡볶이" 카테고리 규칙(예상 4,500~7,500원)으로 뭉뚱그리면 실제보다 훨씬 저렴하게
+    // 추정되는 프랜차이즈. 즉석떡볶이형이라 세트를 나눠 먹는 경우가 많아 share로도 등록.
+    brand: "청년다방",
+    matchKeywords: ["청년다방"],
+    tags: ["분식", "떡볶이", "즉석떡볶이", "나눠먹기"],
+    menus: [
+      {
+        id: "youngdabang_basic_tteokbokki",
+        menuName: "기본떡볶이",
+        mealMode: "single",
+        role: "main",
+        canBeStandaloneMeal: true,
+        price: 14000,
+        fullness: 6,
+      },
+      {
+        id: "youngdabang_youth_set",
+        menuName: "청년세트 (나눠먹기)",
+        mealMode: "share",
+        role: "main",
+        canBeStandaloneMeal: true,
+        totalPrice: 21000,
+        servings: 2,
+      },
+    ],
+  },
 ];
 
 export interface MatchedFranchiseMenu {
