@@ -3,11 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { MealPlanItem } from "@/lib/types";
 import { loadKakaoMaps } from "@/lib/kakaoMapsLoader";
+import { isCuratedAnamLocation } from "@/lib/curatedAnam";
 
 interface Props {
   center: { lat: number; lng: number } | null; // 내 위치
   meals: MealPlanItem[]; // 현재 보고 있는 플랜의 끼니들
   activeMealIndex?: number; // 끼니 카드를 눌렀을 때 강조할 mealIndex (-1 또는 미지정이면 없음)
+  location?: string; // "안암"이 들어간 위치일 때만 "안암 생존 지도"로 표시, 그 외엔 "생존 지도"
 }
 
 type LoadState = "idle" | "loading" | "ready" | "no-key" | "error";
@@ -19,7 +21,8 @@ function mappableMeals(meals: MealPlanItem[]) {
   );
 }
 
-export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Props) {
+export default function SurvivalMap({ center, meals, activeMealIndex = -1, location = "" }: Props) {
+  const mapTitle = isCuratedAnamLocation(location) ? "안암 생존 지도" : "생존 지도";
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const overlaysRef = useRef<any[]>([]);
@@ -119,7 +122,7 @@ export default function SurvivalMap({ center, meals, activeMealIndex = -1 }: Pro
   return (
     <div className="panel flex h-full flex-col gap-2.5 p-[15px]">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
-        <p className="text-[15px] font-black text-ink">안암 생존 지도</p>
+        <p className="text-[15px] font-black text-ink">{mapTitle}</p>
         <div className="flex items-center gap-2.5 text-[11px] font-extrabold text-ink">
           <Legend color="bg-ink" label="내 위치" />
           <Legend color="bg-ramen" label="식당" />

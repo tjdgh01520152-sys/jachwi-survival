@@ -552,6 +552,7 @@ export default function Home() {
                   center={pool?.center ? { lat: pool.center.y, lng: pool.center.x } : null}
                   meals={activeEntry.plan.meals}
                   activeMealIndex={activeMealIndex}
+                  location={location}
                 />
               </div>
             </div>
