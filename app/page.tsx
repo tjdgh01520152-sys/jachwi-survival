@@ -9,7 +9,7 @@ import {
   UserPreferences,
 } from "@/lib/types";
 import { COOKING_POOL } from "@/lib/cooking";
-import { OPTION_META, isSingleSelectGroup } from "@/lib/optionLabels";
+import { CONFLICTING_OPTIONS, OPTION_META, isSingleSelectGroup } from "@/lib/optionLabels";
 import {
   GeneratedPlan,
   ReplaceFeedback,
@@ -135,6 +135,8 @@ export default function Home() {
             if (o.group === meta.group) next.delete(o.key);
           }
         }
+        const conflict = CONFLICTING_OPTIONS[key];
+        if (conflict) next.delete(conflict);
         next.add(key);
       }
       return next;

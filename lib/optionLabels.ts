@@ -65,3 +65,16 @@ export const SINGLE_SELECT_GROUPS = ["거리·가격 성향", "반복 허용도"
 export function isSingleSelectGroup(group: string): boolean {
   return SINGLE_SELECT_GROUPS.includes(group);
 }
+
+// "좋아하는 취향"과 "피하고 싶은 것"에서 서로 정반대인 짝. 한쪽을 고르면 반대쪽은 자동 해제된다
+// (예: "매운 음식"을 고르면 "매운 음식 피하기"는 선택돼 있었더라도 풀림).
+export const CONFLICTING_OPTIONS: Partial<Record<OptionKey, OptionKey>> = {
+  likeSpicy: "avoidSpicy",
+  avoidSpicy: "likeSpicy",
+  likeNoodle: "avoidNoodle",
+  avoidNoodle: "likeNoodle",
+  likeCrispyFried: "avoidFried",
+  avoidFried: "likeCrispyFried",
+  likeMeat: "avoidMeat",
+  avoidMeat: "likeMeat",
+};
