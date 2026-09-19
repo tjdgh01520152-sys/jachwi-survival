@@ -424,6 +424,30 @@ function buildUnifiedPool(pool: CandidatePool): UnifiedCandidate[] {
   return [...eatout, ...convenience, ...cooking];
 }
 
+/**
+ * "피하고 싶은 것"으로 선택된 항목은 감점이 아니라 후보 풀 생성 단계에서 아예 제거한다.
+ * (카페/술집류를 하드 제외하는 isSnackPlace와 같은 패턴 — scoreCandidate의 감점 로직은
+ * 이 필터를 통과하지 못한 후보에는 애초에 도달하지 않으므로 이중 안전장치로만 남는다.)
+ */
+function filterAvoidedCandidates(pool: UnifiedCandidate[], options: Set<OptionKey>): UnifiedCandidate[] {
+  const activeAvoidKeywords = (Object.entries(AVOID_KEYWORD_MAP) as [OptionKey, string[]][])
+    .filter(([key]) => options.has(key))
+    .flatMap(([, keywords]) => keywords);
+  const avoidSmallPortion = options.has("avoidSmallPortion");
+
+  if (activeAvoidKeywords.length === 0 && !avoidSmallPortion) return pool;
+
+  return pool.filter((c) => {
+    const text = `${c.menuName} ${c.placeName} ${c.category}`;
+    if (activeAvoidKeywords.some((k) => text.includes(k))) return false;
+    if (avoidSmallPortion) {
+      const fullnessValue = c.fullness ?? (c.tags.includes("든든함") ? 7 : 4);
+      if (fullnessValue < 5) return false;
+    }
+    return true;
+  });
+}
+
 function shortCategory(categoryName: string): string {
   const parts = categoryName.split(">").map((p) => p.trim());
   return parts[parts.length - 1] || parts[0] || categoryName;
@@ -1648,7 +1672,7 @@ export function analyzeMinimalSurvival(
   options: OptionKey[],
   prefs: UserPreferences
 ): MinimalSurvivalResult {
-  const unifiedPool = buildUnifiedPool(pool);
+  const unifiedPool = filterAvoidedCandidates(buildUnifiedPool(pool), new Set(options));
   const excludedIds = new Set(prefs.excludedPlaceIds);
   const shareableAllowed = new Set(options).has("shareableOk");
 
@@ -1752,8 +1776,8 @@ export function generatePlans(
    */
   seed = 0
 ): GeneratedPlan[] {
-  const unifiedPool = buildUnifiedPool(pool);
   const optionSet = new Set(options);
+  const unifiedPool = filterAvoidedCandidates(buildUnifiedPool(pool), optionSet);
   const excludedIds = new Set(prefs.excludedPlaceIds);
 
   const planDefs: { id: "save" | "balance" | "near"; name: string }[] = [
@@ -1794,8 +1818,8 @@ export function replaceMeal(
   location: string,
   seed = 0
 ): { plan: MealPlan; summary: PlanSummary } {
-  const unifiedPool = buildUnifiedPool(pool);
   const optionSet = new Set(options);
+  const unifiedPool = filterAvoidedCandidates(buildUnifiedPool(pool), optionSet);
   const excludedIds = new Set(prefs.excludedPlaceIds);
 
   const targetMeal = plan.meals.find((m) => m.mealIndex === mealIndex);
