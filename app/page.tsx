@@ -316,9 +316,7 @@ export default function Home() {
         backgroundSize: "18px 18px",
       }}
     >
-      <div
-        className={`mx-auto flex flex-col gap-3.5 ${collapsed ? "max-w-[460px]" : "max-w-5xl"}`}
-      >
+      <div className={`mx-auto flex flex-col gap-3.5 ${loading ? "max-w-[460px]" : "max-w-5xl"}`}>
         {collapsed ? (
           <div className="panel mx-auto flex w-full max-w-[460px] flex-col gap-2 px-3.5 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -519,19 +517,19 @@ export default function Home() {
         )}
 
         {error && (
-          <p className="rounded-xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-bold text-ramen">
+          <p className="mx-auto w-full max-w-[460px] rounded-xl border-[3px] border-ink bg-white px-4 py-3 text-sm font-bold text-ramen">
             {error}
           </p>
         )}
 
         {pool?.isFallback && (
-          <p className="rounded-xl border-[3px] border-ink bg-coin px-4 py-3 text-sm font-bold text-ink">
+          <p className="mx-auto w-full max-w-[460px] rounded-xl border-[3px] border-ink bg-coin px-4 py-3 text-sm font-bold text-ink">
             {pool.fallbackReason ?? "예시 데이터를 보여드리고 있어요."}
           </p>
         )}
 
         {shortfall && shortfall.isSevereShortfall && (
-          <div id="result-section">
+          <div id="result-section" className="mx-auto w-full max-w-[460px]">
             <ShortfallPanel
               result={shortfall}
               budget={Number(budget) || 0}
@@ -545,68 +543,75 @@ export default function Home() {
 
         {generated && activeEntry && (
           <section id="result-section" className="flex flex-col gap-3.5">
-            <SummaryDashboard summary={activeEntry.summary} />
-
-            <SurvivalMap
-              center={pool?.center ? { lat: pool.center.y, lng: pool.center.x } : null}
-              meals={activeEntry.plan.meals}
-              activeMealIndex={activeMealIndex}
-            />
-
-            <div className="flex flex-wrap gap-2">
-              <PlanTabs plans={generated} activePlanId={activePlanId} onSelect={handleSelectPlan} />
-              <button
-                type="button"
-                onClick={handleFullRegenerate}
-                className="press min-h-[44px] shrink-0 rounded-[14px] border-[3px] border-ink bg-coin px-3.5 py-[11px] text-[13px] font-black text-ink"
-              >
-                전체 다시 추천
-              </button>
+            <div className="flex flex-col gap-3.5 lg:flex-row lg:items-stretch lg:gap-8">
+              <div className="lg:flex-1">
+                <SummaryDashboard summary={activeEntry.summary} />
+              </div>
+              <div className="lg:flex-1">
+                <SurvivalMap
+                  center={pool?.center ? { lat: pool.center.y, lng: pool.center.x } : null}
+                  meals={activeEntry.plan.meals}
+                  activeMealIndex={activeMealIndex}
+                />
+              </div>
             </div>
 
-            {activeEntry.plan.shareShortfall && (
-              <p className="rounded-xl border-[3px] border-ink bg-[#D3E7F8] px-4 py-3 text-sm font-bold text-ink">
-                나눠먹기 메뉴를 넣고 싶었지만, 현재 예산/거리 조건에 맞는 후보가 부족했어요.
-              </p>
-            )}
+            <div className="mx-auto flex w-full max-w-[460px] flex-col gap-3.5">
+              <div className="flex flex-wrap gap-2">
+                <PlanTabs plans={generated} activePlanId={activePlanId} onSelect={handleSelectPlan} />
+                <button
+                  type="button"
+                  onClick={handleFullRegenerate}
+                  className="press min-h-[44px] shrink-0 rounded-[14px] border-[3px] border-ink bg-coin px-3.5 py-[11px] text-[13px] font-black text-ink"
+                >
+                  전체 다시 추천
+                </button>
+              </div>
 
-            <div className="flex flex-col">
-              {activeEntry.plan.meals.map((meal) => (
-                <div key={meal.mealIndex} className="mb-3">
-                  <MealCard
-                    meal={meal}
-                    isExcluded={!!meal.placeId && prefs.excludedPlaceIds.includes(meal.placeId)}
-                    busy={busyMealKey === `${activePlanId}:${meal.mealIndex}`}
-                    isActive={activeMealIndex === meal.mealIndex}
-                    showChangedBadge={changed}
-                    onSelect={() => setActiveMealIndex(meal.mealIndex)}
-                    onReroll={() => handleMealFeedback(activePlanId, meal, "reroll")}
-                    onTooFar={() => handleMealFeedback(activePlanId, meal, "tooFar")}
-                    onTooExpensive={() => handleMealFeedback(activePlanId, meal, "tooExpensive")}
-                    onNotAppealing={() => handleMealFeedback(activePlanId, meal, "notAppealing")}
-                    onExclude={() => handleMealFeedback(activePlanId, meal, "exclude")}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="panel-sm p-[15px]">
-              <button
-                type="button"
-                onClick={() => setShowExcluded((s) => !s)}
-                className="text-sm font-black text-ink"
-              >
-                내가 뺀 가게 ({prefs.excludedPlaceIds.length})
-              </button>
-              {showExcluded && (
-                <div className="mt-3">
-                  <ExcludedPanel
-                    excludedIds={prefs.excludedPlaceIds}
-                    pool={pool}
-                    onRestore={handleRestore}
-                  />
-                </div>
+              {activeEntry.plan.shareShortfall && (
+                <p className="rounded-xl border-[3px] border-ink bg-[#D3E7F8] px-4 py-3 text-sm font-bold text-ink">
+                  나눠먹기 메뉴를 넣고 싶었지만, 현재 예산/거리 조건에 맞는 후보가 부족했어요.
+                </p>
               )}
+
+              <div className="flex flex-col">
+                {activeEntry.plan.meals.map((meal) => (
+                  <div key={meal.mealIndex} className="mb-3">
+                    <MealCard
+                      meal={meal}
+                      isExcluded={!!meal.placeId && prefs.excludedPlaceIds.includes(meal.placeId)}
+                      busy={busyMealKey === `${activePlanId}:${meal.mealIndex}`}
+                      isActive={activeMealIndex === meal.mealIndex}
+                      showChangedBadge={changed}
+                      onSelect={() => setActiveMealIndex(meal.mealIndex)}
+                      onReroll={() => handleMealFeedback(activePlanId, meal, "reroll")}
+                      onTooFar={() => handleMealFeedback(activePlanId, meal, "tooFar")}
+                      onTooExpensive={() => handleMealFeedback(activePlanId, meal, "tooExpensive")}
+                      onNotAppealing={() => handleMealFeedback(activePlanId, meal, "notAppealing")}
+                      onExclude={() => handleMealFeedback(activePlanId, meal, "exclude")}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div className="panel-sm p-[15px]">
+                <button
+                  type="button"
+                  onClick={() => setShowExcluded((s) => !s)}
+                  className="text-sm font-black text-ink"
+                >
+                  내가 뺀 가게 ({prefs.excludedPlaceIds.length})
+                </button>
+                {showExcluded && (
+                  <div className="mt-3">
+                    <ExcludedPanel
+                      excludedIds={prefs.excludedPlaceIds}
+                      pool={pool}
+                      onRestore={handleRestore}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}
