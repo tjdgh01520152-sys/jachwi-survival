@@ -1462,6 +1462,10 @@ function toMealPlanItem(
       c.mealMode === "share" && c.totalPrice !== undefined && c.servings !== undefined
         ? { totalPrice: c.totalPrice, servings: c.servings }
         : undefined,
+    cookingInfo:
+      c.mealMode === "cooking" && c.totalCost !== undefined && c.mealsCovered !== undefined
+        ? { totalCost: c.totalCost, mealsCovered: c.mealsCovered }
+        : undefined,
     sideSuggestion,
     survivalScore: c.survivalScore,
     survivalLabels: Array.from(new Set([...c.survivalStaticLabels, ...contextTags])).slice(0, 4),

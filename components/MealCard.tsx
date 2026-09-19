@@ -31,8 +31,8 @@ function priceNote(meal: MealPlanItem): string {
   if (meal.isCurated) {
     return "매장·배달·프로모션에 따라 달라질 수 있어요";
   }
-  if (meal.source === "cooking") {
-    return "장보기 재료비 기준";
+  if (meal.source === "cooking" && meal.cookingInfo) {
+    return `장보기 총 ${meal.cookingInfo.totalCost.toLocaleString("ko-KR")}원 · ${meal.cookingInfo.mealsCovered}끼 해결`;
   }
   return "예상 가격대";
 }
