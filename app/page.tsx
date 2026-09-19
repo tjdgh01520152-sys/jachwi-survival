@@ -316,77 +316,81 @@ export default function Home() {
         backgroundSize: "18px 18px",
       }}
     >
-      <div className="mx-auto flex max-w-[460px] flex-col gap-3.5">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-ink px-3 py-1.5 text-xs font-black tracking-[0.14em] text-coin">
-              SURVIVAL MODE
-            </span>
-          </div>
-
-          <div className="relative rounded-[22px] border-4 border-ink bg-coin p-[22px] pb-5 shadow-hardLg">
-            <div
-              className="font-heading leading-[0.92] tracking-tight text-ink"
-              style={{
-                fontSize: "clamp(46px,15vw,68px)",
-                textShadow: "4px 4px 0 #FAF6E8",
-              }}
-            >
-              자취생
-              <br />
-              생존기
-            </div>
-            <div
-              className="mt-3.5 font-black leading-[1.35]"
-              style={{ fontSize: "clamp(17px,5vw,21px)" }}
-            >
-              아슬아슬한 식비,
-              <br />
-              끝까지 버틸 수 있을까?
-            </div>
-            <div className="absolute -right-2 -top-3.5 rounded-full border-[3px] border-ink bg-ramen px-[13px] py-[7px] text-[13px] font-black text-white [transform:rotate(7deg)]">
-              EP.1 개강
+      <div
+        className={`mx-auto flex flex-col gap-3.5 ${collapsed ? "max-w-[460px]" : "max-w-5xl"}`}
+      >
+        {collapsed ? (
+          <div className="panel mx-auto flex w-full max-w-[460px] flex-col gap-2 px-3.5 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <span className="text-[15px] font-black text-ink">
+                {location.trim() || "안암역"} · {budgetDisplayWon} · {mealsInput || 0}끼
+              </span>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="press min-h-[44px] rounded-full border-[3px] border-ink bg-coin px-4 text-[13px] font-black text-ink"
+              >
+                수정
+              </button>
             </div>
           </div>
-
-          <div className="flex items-end gap-3 rounded-[20px] border-4 border-ink bg-paper p-3.5 shadow-hard">
-            <div className="flex-none animate-bob">
-              <Mascot />
-            </div>
-            <div className="relative flex-1 rounded-2xl border-[3px] border-ink bg-white p-3 text-sm font-extrabold leading-[1.45]">
-              라면만 먹고 버티긴
-              <br />좀 그렇잖아요?
-              <div className="absolute -left-[9px] bottom-3.5 h-3 w-3 rotate-45 border-b-[3px] border-l-[3px] border-ink bg-white" />
-            </div>
-          </div>
-
-          <p className="text-[15px] font-semibold leading-[1.6]">
-            위치, 예산, 끼니 수만 입력하면 근처 식당, 편의점, 직접요리를 섞어 현실적인 생존 루트를
-            짜드려요.
-          </p>
-
-          {collapsed ? (
-            <div className="panel flex flex-col gap-2 px-3.5 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <span className="text-[15px] font-black text-ink">
-                  {location.trim() || "안암역"} · {budgetDisplayWon} · {mealsInput || 0}끼
+        ) : (
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-stretch lg:gap-8">
+            <div className="flex flex-col gap-4 lg:w-[420px] lg:shrink-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-ink px-3 py-1.5 text-xs font-black tracking-[0.14em] text-coin">
+                  SURVIVAL MODE
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="press min-h-[44px] rounded-full border-[3px] border-ink bg-coin px-4 text-[13px] font-black text-ink"
-                >
-                  수정
-                </button>
               </div>
+
+              <div className="relative rounded-[22px] border-4 border-ink bg-coin p-[22px] pb-5 shadow-hardLg">
+                <div
+                  className="font-heading leading-[0.92] tracking-tight text-ink"
+                  style={{
+                    fontSize: "clamp(46px,15vw,68px)",
+                    textShadow: "4px 4px 0 #FAF6E8",
+                  }}
+                >
+                  자취생
+                  <br />
+                  생존기
+                </div>
+                <div
+                  className="mt-3.5 font-black leading-[1.35]"
+                  style={{ fontSize: "clamp(17px,5vw,21px)" }}
+                >
+                  아슬아슬한 식비,
+                  <br />
+                  끝까지 버틸 수 있을까?
+                </div>
+                <div className="absolute -right-2 -top-3.5 rounded-full border-[3px] border-ink bg-ramen px-[13px] py-[7px] text-[13px] font-black text-white [transform:rotate(7deg)]">
+                  EP.1 개강
+                </div>
+              </div>
+
+              <div className="flex items-end gap-3 rounded-[20px] border-4 border-ink bg-paper p-3.5 shadow-hard">
+                <div className="flex-none animate-bob">
+                  <Mascot />
+                </div>
+                <div className="relative flex-1 rounded-2xl border-[3px] border-ink bg-white p-3 text-sm font-extrabold leading-[1.45]">
+                  라면만 먹고 버티긴
+                  <br />좀 그렇잖아요?
+                  <div className="absolute -left-[9px] bottom-3.5 h-3 w-3 rotate-45 border-b-[3px] border-l-[3px] border-ink bg-white" />
+                </div>
+              </div>
+
+              <p className="text-[15px] font-semibold leading-[1.6]">
+                위치, 예산, 끼니 수만 입력하면 근처 식당, 편의점, 직접요리를 섞어 현실적인 생존
+                루트를 짜드려요.
+              </p>
             </div>
-          ) : (
+
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSubmit();
               }}
-              className="flex flex-col gap-4"
+              className="flex flex-1 flex-col justify-center gap-4"
             >
               <SentenceForm
                 location={location}
@@ -421,14 +425,8 @@ export default function Home() {
                 {loading ? "생존 루트 계산 중..." : "생존 루트 뽑기"}
               </button>
             </form>
-          )}
-
-          <div className="flex flex-wrap justify-center gap-2">
-            <Tag label="근처 식당" />
-            <Tag label="편의점 조합" />
-            <Tag label="직접요리" />
           </div>
-        </div>
+        )}
 
         {loading && (
           <div id="loading-section" className="flex flex-col gap-3.5">
@@ -614,13 +612,5 @@ export default function Home() {
         )}
       </div>
     </main>
-  );
-}
-
-function Tag({ label }: { label: string }) {
-  return (
-    <span className="rounded-full border-[3px] border-ink bg-paper px-3 py-1.5 text-xs font-extrabold text-ink">
-      {label}
-    </span>
   );
 }
