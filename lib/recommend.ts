@@ -67,7 +67,27 @@ const LIKE_KEYWORD_MAP: Partial<Record<OptionKey, string[]>> = {
   likeFastfoodOk: ["버거", "치킨", "피자", "토스트", "샌드위치"],
   likeKorean: ["한식", "백반", "국밥", "찌개", "비빔밥"],
   // likeNewMenu는 키워드 매칭이 아니라 다양성 가중치로 반영됨 (applyOptionAdjustments)
+  // 아래 두 개는 "건강 지향(참고용)" — 카테고리/메뉴명 키워드로 추정한 근사치이며 실제 영양 계산이 아니다.
+  likeHighProtein: ["닭가슴살", "샐러드", "포케", "단백질", "훈제", "연어", "두부", "계란"],
+  likeVeggie: ["샐러드", "나물", "쌈", "채소", "비건", "쌈밥"],
 };
+
+// "저탄수 지향" 선택 시 감점하는 탄수화물 위주 키워드 (하드 제외 아님 — 약한 감점으로 순위만 밀어냄).
+const CARB_HEAVY_KEYWORDS = [
+  "면",
+  "국수",
+  "라면",
+  "빵",
+  "떡볶이",
+  "덮밥",
+  "도시락",
+  "김밥",
+  "파스타",
+  "우동",
+  "짜장",
+  "짬뽕",
+  "냉면",
+];
 
 // "피하고 싶은 것" 옵션 → 매칭되면 큰 감점을 주는 키워드
 const AVOID_KEYWORD_MAP: Partial<Record<OptionKey, string[]>> = {
@@ -729,6 +749,10 @@ function scoreCandidate(
       const label = OPTION_LABEL_BY_KEY[key];
       if (label) reasonTags.push(label);
     }
+  }
+  // "저탄수 지향(참고용)" — 하드 제외가 아니라 약한 감점으로 순위만 밀어낸다.
+  if (ctx.options.has("likeLowCarb") && containsAny(text, CARB_HEAVY_KEYWORDS)) {
+    taste -= 3;
   }
 
   // 든든함 점수: 프랜차이즈 seed에 fullness가 있으면 그 값을, 없으면 태그로 판단

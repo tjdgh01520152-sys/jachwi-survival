@@ -38,6 +38,11 @@ export const OPTION_META: OptionMeta[] = [
   { key: "likeFastfoodOk", label: "패스트푸드 OK", group: "좋아하는 취향" },
   { key: "likeNewMenu", label: "새로운 메뉴 도전", group: "좋아하는 취향" },
 
+  // 건강 지향 (참고용) — 카테고리/메뉴명 키워드로 추정한 근사치이며 실제 영양 계산이 아니다.
+  { key: "likeLowCarb", label: "저탄수 지향", group: "건강 지향 (참고용)" },
+  { key: "likeHighProtein", label: "고단백 지향", group: "건강 지향 (참고용)" },
+  { key: "likeVeggie", label: "야채 위주", group: "건강 지향 (참고용)" },
+
   // 피하고 싶은 것 (8개, 3개만 기본 노출)
   { key: "avoidSpicy", label: "매운 음식 피하기", group: "피하고 싶은 것", core: true },
   { key: "avoidNoodle", label: "면 피하기", group: "피하고 싶은 것", core: true },

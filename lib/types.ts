@@ -84,6 +84,10 @@ export type OptionKey =
   | "likeFastfoodOk" // 패스트푸드 OK
   | "likeKorean" // 한식 선호
   | "likeNewMenu" // 새로운 메뉴 도전
+  // 건강 지향 (참고용 — 카테고리/메뉴명 키워드 기반 근사치, 실제 영양 계산 아님)
+  | "likeLowCarb" // 저탄수 지향
+  | "likeHighProtein" // 고단백 지향
+  | "likeVeggie" // 야채 위주
   // 피하고 싶은 것
   | "avoidSpicy" // 매운 음식 피하기
   | "avoidNoodle" // 면 피하기
